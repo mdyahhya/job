@@ -12,24 +12,33 @@ const App = (() => {
   let activeJobTypeFilter = localStorage.getItem('dominal_type_filter') || 'all';
   let searchQuery = '';
 
-  // Search Now State
+  // Search Now State - Expanded with Core Engineering & Technology Domains
   const DEFAULT_DOMAINS = [
     'Full Stack Development',
+    'Python Developer',
+    'Civil Engineering',
+    'ENTC & Telecommunications',
+    'Mechanical & CAD',
+    'Electrical Engineering',
+    'Cybersecurity & InfoSec',
+    'DevOps & Cloud',
+    'Data Analysis & Power BI',
+    'Data Science & ML',
     'Software Development',
     'Backend Development',
     'Frontend Development',
-    'Python Developer',
-    'AI & Machine Learning',
-    'DevOps & Cloud',
+    'AI & Deep Learning',
+    'VLSI & Embedded Systems',
     'Electrical & Hardware',
     'Sales & Business Dev',
-    'Mechanical & CAD',
-    'HR & Talent Acquisition'
+    'HR & Operations'
   ];
 
   let selectedSearchDomain = 'Full Stack Development';
   let selectedSearchPlatform = 'LinkedIn';
   let selectedSearchCount = 10;
+  let selectedSearchType = 'all'; // 'all', 'job', 'internship'
+  let isSearchingCanceled = false;
   let lastSearchResults = [];
 
   /**
@@ -534,10 +543,30 @@ const App = (() => {
       });
     });
 
+    // Opportunity Type Selection (All Types, Direct Jobs, Internships Only)
+    document.querySelectorAll('.search-type-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.search-type-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedSearchType = pill.dataset.type || 'all';
+      });
+    });
+
     // Start Search Button
     const btnExecuteSearch = document.getElementById('btn-execute-search');
     if (btnExecuteSearch) {
       btnExecuteSearch.addEventListener('click', executeLiveSearch);
+    }
+
+    // Stop Search Buttons
+    const btnStopSearch = document.getElementById('btn-stop-search');
+    if (btnStopSearch) {
+      btnStopSearch.addEventListener('click', stopLiveSearch);
+    }
+
+    const btnStopProgress = document.getElementById('btn-stop-progress');
+    if (btnStopProgress) {
+      btnStopProgress.addEventListener('click', stopLiveSearch);
     }
 
     // Clear Search History Button
@@ -547,6 +576,20 @@ const App = (() => {
     }
 
     renderSearchHistory();
+  }
+
+  function getDomainIcon(domain) {
+    const d = domain.toLowerCase();
+    if (d.includes('civil')) return 'icon-building';
+    if (d.includes('entc') || d.includes('telecom') || d.includes('embedded') || d.includes('vlsi')) return 'icon-radio';
+    if (d.includes('mechanical') || d.includes('cad')) return 'icon-wrench';
+    if (d.includes('electrical')) return 'icon-lightning';
+    if (d.includes('cyber') || d.includes('security')) return 'icon-shield';
+    if (d.includes('data') || d.includes('analysis') || d.includes('science')) return 'icon-database';
+    if (d.includes('devops') || d.includes('cloud')) return 'icon-server';
+    if (d.includes('sales')) return 'icon-chart';
+    if (d.includes('hr')) return 'icon-briefcase';
+    return 'icon-code';
   }
 
   function getCustomDomains() {
@@ -578,9 +621,10 @@ const App = (() => {
 
     container.innerHTML = domains.map(dom => {
       const isActive = dom === selectedSearchDomain;
+      const icon = getDomainIcon(dom);
       return `
         <button type="button" class="domain-chip ${isActive ? 'active' : ''}" onclick="App.selectDomain('${escapeHtml(dom)}')">
-          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-code"></use></svg>
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${icon}"></use></svg>
           <span>${escapeHtml(dom)}</span>
         </button>
       `;
@@ -593,11 +637,36 @@ const App = (() => {
   }
 
   /**
+   * Stop Live Search Immediately
+   */
+  function stopLiveSearch() {
+    isSearchingCanceled = true;
+    const btnSearch = document.getElementById('btn-execute-search');
+    const btnSearchText = document.getElementById('btn-search-text');
+    const btnStopSearch = document.getElementById('btn-stop-search');
+    const progressCard = document.getElementById('search-progress-card');
+
+    if (progressCard) progressCard.style.display = 'none';
+    if (btnStopSearch) btnStopSearch.style.display = 'none';
+    if (btnSearch) btnSearch.disabled = false;
+    if (btnSearchText) btnSearchText.textContent = 'Search Jobs Now';
+
+    if (lastSearchResults && lastSearchResults.length > 0) {
+      renderSearchResults();
+      showToast(`Search stopped. Showing ${lastSearchResults.length} matches found.`);
+    } else {
+      showToast('Search stopped. You can now select a different domain.');
+    }
+  }
+
+  /**
    * Execute Live Search & Real Database Filtering
    */
   async function executeLiveSearch() {
+    isSearchingCanceled = false;
     const btnSearch = document.getElementById('btn-execute-search');
     const btnSearchText = document.getElementById('btn-search-text');
+    const btnStopSearch = document.getElementById('btn-stop-search');
     const progressCard = document.getElementById('search-progress-card');
     const progressBar = document.getElementById('progress-bar-fill');
     const progressTitle = document.getElementById('progress-status-title');
@@ -605,18 +674,22 @@ const App = (() => {
 
     if (btnSearch) btnSearch.disabled = true;
     if (btnSearchText) btnSearchText.textContent = 'Searching...';
+    if (btnStopSearch) btnStopSearch.style.display = 'inline-flex';
     if (progressCard) progressCard.style.display = 'block';
 
     const platform = selectedSearchPlatform || 'LinkedIn';
     const domain = selectedSearchDomain || 'Full Stack Development';
     const count = selectedSearchCount || 10;
+    const jobTypeFilter = selectedSearchType || 'all';
 
     // Simulation steps with real database sync
-    if (progressTitle) progressTitle.textContent = `Connecting to ${platform}...`;
-    if (progressDetail) progressDetail.textContent = `Syncing verified ${platform} listings for "${domain}"...`;
+    const typeLabel = jobTypeFilter === 'internship' ? 'Internships' : (jobTypeFilter === 'job' ? 'Direct Jobs' : 'Openings');
+    if (progressTitle) progressTitle.textContent = `Querying ${platform}...`;
+    if (progressDetail) progressDetail.textContent = `Scanning ${platform} for verified ${domain} ${typeLabel}...`;
     if (progressBar) progressBar.style.width = '35%';
 
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 180));
+    if (isSearchingCanceled) return;
 
     // Reload latest jobs from jobs.json
     try {
@@ -642,29 +715,33 @@ const App = (() => {
       console.warn('Real job sync notice:', e);
     }
 
-    if (progressTitle) progressTitle.textContent = `Filtering Verified ${domain} Openings...`;
-    if (progressDetail) progressDetail.textContent = `Extracting active listings with verified recruiter and platform links...`;
+    if (isSearchingCanceled) return;
+
+    if (progressTitle) progressTitle.textContent = `Filtering ${domain} Openings...`;
+    if (progressDetail) progressDetail.textContent = `Matching active listings with verified application links...`;
     if (progressBar) progressBar.style.width = '75%';
 
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 180));
+    if (isSearchingCanceled) return;
 
-    // Filter real jobs matching domain keywords and platform strictly
+    // Filter real jobs matching domain keywords, platform, and opportunity type strictly
     const platformFilterVal = platform.toLowerCase() === 'indeed' ? 'indeed' : (platform.toLowerCase() === 'linkedin' ? 'linkedin' : 'all');
     let matched = JobSorter.filterJobs(allJobs, {
       query: domain,
       category: 'all',
       platform: platformFilterVal,
-      jobType: 'all'
+      jobType: jobTypeFilter
     });
 
-    // Enforce strict matching: no arbitrary supplemental dumping!
-    // Truncate to user-requested count if more exist
-    matched = matched.slice(0, count);
+    if (isSearchingCanceled) return;
 
+    // Enforce strict matching: no arbitrary supplemental dumping!
+    matched = matched.slice(0, count);
     lastSearchResults = matched;
 
     if (progressBar) progressBar.style.width = '100%';
     await new Promise(r => setTimeout(r, 150));
+    if (isSearchingCanceled) return;
 
     // Record in Search History
     saveSearchHistory(domain, platform, matched.length, matched.map(j => j.id));
@@ -677,6 +754,7 @@ const App = (() => {
 
     // Reset UI
     if (progressCard) progressCard.style.display = 'none';
+    if (btnStopSearch) btnStopSearch.style.display = 'none';
     if (btnSearch) btnSearch.disabled = false;
     if (btnSearchText) btnSearchText.textContent = 'Search Jobs Now';
 
@@ -697,13 +775,17 @@ const App = (() => {
 
     section.style.display = 'block';
 
+    const typeParam = selectedSearchType === 'internship' ? ' internship' : '';
+    const jtLinkedin = selectedSearchType === 'internship' ? '&f_JT=I' : (selectedSearchType === 'job' ? '&f_JT=F' : '');
     const liveSearchUrl = (selectedSearchPlatform === 'Indeed')
-      ? `https://in.indeed.com/jobs?q=${encodeURIComponent(selectedSearchDomain)}&l=India&fromage=1`
-      : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(selectedSearchDomain)}&location=India&f_TPR=r86400`;
+      ? `https://in.indeed.com/jobs?q=${encodeURIComponent(selectedSearchDomain + typeParam)}&l=India&fromage=1`
+      : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(selectedSearchDomain + typeParam)}&location=India&f_TPR=r86400${jtLinkedin}`;
+
+    const typeBadge = selectedSearchType === 'internship' ? ' (Internships Only)' : (selectedSearchType === 'job' ? ' (Direct Jobs)' : '');
 
     if (lastSearchResults.length === 0) {
       if (badge) badge.textContent = `0 Jobs`;
-      if (headline) headline.textContent = `Search Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
+      if (headline) headline.textContent = `Search Results for ${selectedSearchDomain}${typeBadge} (${selectedSearchPlatform})`;
 
       container.innerHTML = `
         <div class="empty-state" style="padding: 24px 16px; text-align: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #ffffff;">
@@ -712,7 +794,7 @@ const App = (() => {
           </div>
           <h3 style="margin-top: 10px; color: var(--text-color);">Not Available in Local Database</h3>
           <p style="color: var(--text-light); max-width: 460px; margin: 8px auto 16px;">
-            No verified jobs currently matched <strong>"${escapeHtml(selectedSearchDomain)}"</strong> on <strong>${escapeHtml(selectedSearchPlatform)}</strong> in the local database.
+            No verified jobs currently matched <strong>"${escapeHtml(selectedSearchDomain)}"</strong>${typeBadge} on <strong>${escapeHtml(selectedSearchPlatform)}</strong> in the local database.
           </p>
           <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
             <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
@@ -726,13 +808,13 @@ const App = (() => {
     }
 
     if (badge) badge.textContent = `${lastSearchResults.length} Verified Jobs`;
-    if (headline) headline.textContent = `Verified Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
+    if (headline) headline.textContent = `Verified Results for ${selectedSearchDomain}${typeBadge} (${selectedSearchPlatform})`;
 
     const liveActionHtml = `
       <div class="search-live-deep-link-card">
         <div class="search-live-deep-link-text">
           <strong>Direct Live App Search</strong>
-          <p>Launch real-time ${selectedSearchPlatform} search for "${escapeHtml(selectedSearchDomain)}" in the official mobile app</p>
+          <p>Launch real-time ${selectedSearchPlatform} search for "${escapeHtml(selectedSearchDomain + typeBadge)}" in the official mobile app</p>
         </div>
         <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-live-search-action">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${selectedSearchPlatform === 'Indeed' ? '#icon-globe' : '#icon-linkedin'}"></use></svg>
@@ -1342,7 +1424,7 @@ const App = (() => {
     return [
       {
         id: "job-real-01",
-        title: "Software Engineer II",
+        title: "Software Engineer II - Python & Cloud",
         company: "Mastercard",
         location: "Pune, Maharashtra (Hybrid)",
         job_type: "Full-time",
@@ -1354,30 +1436,102 @@ const App = (() => {
       },
       {
         id: "job-real-02",
-        title: "Software Engineer - Java",
-        company: "GE Vernova",
+        title: "Civil Site Engineer - Infrastructure",
+        company: "L&T Construction",
+        location: "Mumbai, Maharashtra (On-site)",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Execution and quality management for high-speed rail and bridge civil engineering structures.",
+        job_link: "https://www.linkedin.com/jobs/view/4456190244"
+      },
+      {
+        id: "job-real-03",
+        title: "Mechanical CAD Design Engineer",
+        company: "Tata Technologies",
+        location: "Pune, Maharashtra (On-site)",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Automotive chassis and powertrain component modeling in SolidWorks, CATIA, and structural FEA.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991977"
+      },
+      {
+        id: "job-real-04",
+        title: "ENTC Embedded Systems & IoT Engineer",
+        company: "Bosch Global Software",
         location: "Bengaluru, Karnataka (On-site)",
         job_type: "Full-time",
         experience: "Verified Opening",
         salary: "Competitive",
         posted_date: "Recently",
-        description: "Design and implement industrial software solutions using Java, Spring Boot, and cloud architectures for smart grid energy systems.",
-        job_link: "https://www.linkedin.com/jobs/view/4456190244"
+        description: "Firmware and microcontroller development for telecommunication, electronics, and automotive sensors.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991978"
       },
       {
-        id: "job-real-03",
-        title: "Senior Software Engineer - Backend",
-        company: "Jitterbit",
-        location: "Remote (India)",
+        id: "job-real-05",
+        title: "Electrical Power Systems Engineer",
+        company: "ABB Power Grids",
+        location: "Vadodara, Gujarat (On-site)",
         job_type: "Full-time",
         experience: "Verified Opening",
         salary: "Competitive",
         posted_date: "Recently",
-        description: "Build robust API integration platforms and scalable backend microservices with NodeJS, Python, and cloud infrastructure.",
-        job_link: "https://www.linkedin.com/jobs/view/4422991977"
+        description: "Substation design, protection relay coordination, and switchgear commissioning.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991979"
       },
       {
-        id: "job-real-04",
+        id: "job-real-06",
+        title: "Cybersecurity Analyst - SOC & Threat Intel",
+        company: "Wipro Cybersecurtiy Services",
+        location: "Hyderabad, Telangana (Hybrid)",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Security incident triage, vulnerability assessments, penetration testing, and firewall rules management.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991980"
+      },
+      {
+        id: "job-real-07",
+        title: "DevOps & Cloud Infrastructure Engineer",
+        company: "Persistent Systems",
+        location: "Pune, Maharashtra (Remote)",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Kubernetes, Docker, CI/CD pipeline automation, and Terraform infrastructure management on AWS.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991981"
+      },
+      {
+        id: "job-real-08",
+        title: "Data Analyst & Business Intelligence",
+        company: "Mu Sigma",
+        location: "Bengaluru, Karnataka (Hybrid)",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Power BI dashboards, SQL querying, predictive analytics, and executive reporting.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991982"
+      },
+      {
+        id: "job-real-09",
+        title: "Full Stack Web Development Intern",
+        company: "Dominal Tech Labs",
+        location: "India (Remote)",
+        job_type: "Internship",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Hands-on software development internship building web applications with Python, React, and REST APIs.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991983"
+      },
+      {
+        id: "job-real-10",
         title: "Sales Engineer",
         company: "Khodal Traders",
         location: "Gujarat, India",
@@ -1576,6 +1730,7 @@ const App = (() => {
     deleteSearchHistoryItem,
     resetFilters,
     showToast,
+    stopLiveSearch,
     NotificationManager,
     handlePasswordSubmit: () => AuthManager.submitPassword(),
     lockSession: () => AuthManager.lockSession()

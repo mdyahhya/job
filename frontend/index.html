@@ -250,6 +250,25 @@
       <line x1="12" y1="16" x2="12" y2="12"></line>
       <line x1="12" y1="8" x2="12.01" y2="8"></line>
     </symbol>
+    <!-- Shield / Cybersecurity -->
+    <symbol id="icon-shield" viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+    </symbol>
+    <!-- Radio / ENTC / Telecom -->
+    <symbol id="icon-radio" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="2"></circle>
+      <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+    </symbol>
+    <!-- Database / Data Science / Analytics -->
+    <symbol id="icon-database" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+    </symbol>
+    <!-- Stop / Cancel -->
+    <symbol id="icon-stop" viewBox="0 0 24 24">
+      <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+    </symbol>
   </svg>
 
   <!-- ==========================================================================
@@ -573,11 +592,30 @@
           </div>
         </div>
 
-        <!-- Execute Search Button -->
-        <button class="btn-execute-search" id="btn-execute-search" type="button">
-          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
-          <span id="btn-search-text">Search Jobs Now</span>
-        </button>
+        <!-- 4. Target Opportunity Type -->
+        <div class="search-now-step">
+          <label class="step-label">
+            <span class="step-number">4</span>
+            <span>Opportunity Type</span>
+          </label>
+          <div class="count-pill-selector search-type-pill-selector">
+            <button type="button" class="search-type-pill active" data-type="all">All Types</button>
+            <button type="button" class="search-type-pill" data-type="job">Direct Jobs</button>
+            <button type="button" class="search-type-pill" data-type="internship">Internships Only</button>
+          </div>
+        </div>
+
+        <!-- Search Action Buttons -->
+        <div class="search-actions-row">
+          <button class="btn-execute-search" id="btn-execute-search" type="button">
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+            <span id="btn-search-text">Search Jobs Now</span>
+          </button>
+          <button class="btn-stop-search" id="btn-stop-search" type="button" style="display: none;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-stop"></use></svg>
+            <span>Stop Searching</span>
+          </button>
+        </div>
       </div>
 
       <!-- Live Search Progress Indicator (Hidden by default) -->
@@ -590,6 +628,10 @@
         <div class="progress-bar-track">
           <div class="progress-bar-fill" id="progress-bar-fill"></div>
         </div>
+        <button class="btn-stop-search-progress" id="btn-stop-progress" type="button">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-stop"></use></svg>
+          <span>Stop Searching & View Found</span>
+        </button>
       </div>
 
       <!-- Search Results Container -->

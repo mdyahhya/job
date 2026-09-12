@@ -37,9 +37,9 @@ def run_scraper():
         print("Scraping live verified jobs via python-jobspy...")
         jobs_df = scrape_jobs(
             site_name=["linkedin", "indeed"],
-            search_term="software engineer OR python developer OR full stack developer OR electrical engineer OR b2b sales OR software intern OR python intern",
+            search_term="software engineer OR python developer OR civil engineer OR mechanical engineer OR entc engineer OR electrical engineer OR cyber security OR data analyst OR data scientist OR devops OR software intern OR engineering intern",
             location="India",
-            results_wanted=50,
+            results_wanted=100,
             hours_old=72,
             country_indeed='India'
         )
