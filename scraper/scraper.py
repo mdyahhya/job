@@ -11,12 +11,12 @@ Deduplicates, classifies workplace mode (Remote vs On-site),
 and merges into frontend/data/jobs.json preserving all historical openings.
 """
 
-import os
-import json
-import uuid
 import datetime
+import importlib
+import json
 import re
 import urllib.request
+import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -54,7 +54,8 @@ def fetch_jobspy():
     """Tier 1: JobSpy (LinkedIn, Indeed, Glassdoor, Google, ZipRecruiter, Naukri, Bayt)"""
     jobs = []
     try:
-        from jobspy import scrape_jobs
+        jobspy_mod = importlib.import_module("jobspy")
+        scrape_jobs = getattr(jobspy_mod, "scrape_jobs")  # noqa: B009
         print("Scraping via python-jobspy (LinkedIn & Indeed)...")
         # Keep results_wanted moderate (25-30) per recommendation to avoid LinkedIn IP throttle
         df = scrape_jobs(
@@ -101,9 +102,9 @@ def fetch_jobspy():
                     "platform": platform
                 })
             print(f"JobSpy fetched {len(jobs)} jobs.")
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         print("JobSpy not installed in current Python environment. Proceeding to secondary sources.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"JobSpy cycle notice: {e}. Skipping JobSpy for this cycle.")
     return jobs
 
@@ -145,7 +146,7 @@ def fetch_remotive():
                     "platform": "Remotive"
                 })
         print(f"Remotive API fetched {len(jobs)} jobs.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Remotive API notice: {e}. Continuing.")
     return jobs
 
@@ -189,7 +190,7 @@ def fetch_remoteok():
                     "platform": "RemoteOK"
                 })
         print(f"RemoteOK API fetched {len(jobs)} jobs.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"RemoteOK API notice: {e}. Continuing.")
     return jobs
 
@@ -232,7 +233,7 @@ def fetch_arbeitnow():
                     "platform": "Arbeitnow"
                 })
         print(f"Arbeitnow API fetched {len(jobs)} jobs.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Arbeitnow API notice: {e}. Continuing.")
     return jobs
 
@@ -278,13 +279,13 @@ def fetch_weworkremotely():
                         "job_link": link,
                         "platform": "WeWorkRemotely"
                     })
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"WWR feed notice ({url}): {e}. Continuing.")
     print(f"WeWorkRemotely RSS fetched {len(jobs)} jobs.")
     return jobs
 
 def run_scraper():
-    print(f"[{datetime.datetime.now().isoformat()}] Starting Dominal Jobs Multi-Source Scraping Engine...")
+    print(f"[{datetime.datetime.now(datetime.timezone.utc).isoformat()}] Starting Dominal Jobs Multi-Source Scraping Engine...")
     output_dir = Path(__file__).resolve().parent.parent / "frontend" / "data"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / "jobs.json"
@@ -297,7 +298,7 @@ def run_scraper():
                 raw = json.load(f)
                 existing_jobs = [j for j in raw if not j.get('id', '').startswith('dom-job-') and '412389' not in j.get('job_link', '')]
             print(f"Loaded {len(existing_jobs)} existing verified historical jobs.")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Notice reading existing jobs: {e}")
 
     # Ensure existing jobs also have workplace_type normalized
