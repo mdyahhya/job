@@ -10,7 +10,188 @@ const App = (() => {
   let activeCategoryFilter = 'all';
   let activePlatformFilter = localStorage.getItem('dominal_platform_filter') || 'all';
   let activeJobTypeFilter = localStorage.getItem('dominal_type_filter') || 'all';
+  let activeStatusFilter = localStorage.getItem('dominal_feed_status_filter') || 'fresh'; // 'fresh' (default, hides checked on refresh) or 'all'
+  let currentHistoryTab = 'checked'; // 'checked' or 'archive'
   let searchQuery = '';
+
+  /**
+   * ==========================================================================
+   * JOB HISTORY & CHECKED STATUS MANAGER
+   * Persists checked jobs to eliminate repetitive postings on refresh,
+   * stores complete fetched opening archives, and syncs across views.
+   * ==========================================================================
+   */
+  const JobHistoryManager = {
+    KEYS: {
+      CHECKED_IDS: 'dominal_checked_job_ids',
+      CHECKED_DATA: 'dominal_checked_jobs_data',
+      FETCHED_ARCHIVE: 'dominal_all_fetched_archive',
+      STATUS_FILTER: 'dominal_feed_status_filter'
+    },
+
+    getCheckedIds() {
+      try {
+        const raw = localStorage.getItem(this.KEYS.CHECKED_IDS);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    isChecked(jobId) {
+      if (!jobId) return false;
+      const ids = this.getCheckedIds();
+      return ids.includes(jobId);
+    },
+
+    markChecked(jobId, jobData) {
+      if (!jobId) return;
+      const ids = this.getCheckedIds();
+      if (!ids.includes(jobId)) {
+        ids.push(jobId);
+        localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
+      }
+      try {
+        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
+        const map = dataRaw ? JSON.parse(dataRaw) : {};
+        map[jobId] = {
+          ...(jobData || {}),
+          id: jobId,
+          checkedAt: new Date().toISOString(),
+          formattedCheckedAt: new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }).format(new Date())
+        };
+        localStorage.setItem(this.KEYS.CHECKED_DATA, JSON.stringify(map));
+      } catch (e) {
+        console.error('Error saving checked job data:', e);
+      }
+      this.updateHistoryBadge();
+    },
+
+    uncheck(jobId) {
+      if (!jobId) return;
+      const ids = this.getCheckedIds().filter(id => id !== jobId);
+      localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
+      try {
+        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
+        if (dataRaw) {
+          const map = JSON.parse(dataRaw);
+          delete map[jobId];
+          localStorage.setItem(this.KEYS.CHECKED_DATA, JSON.stringify(map));
+        }
+      } catch (e) {}
+      this.updateHistoryBadge();
+    },
+
+    toggleChecked(jobId, jobData) {
+      const isCurrentlyChecked = this.isChecked(jobId);
+      if (isCurrentlyChecked) {
+        this.uncheck(jobId);
+        return false;
+      } else {
+        this.markChecked(jobId, jobData);
+        return true;
+      }
+    },
+
+    getCheckedJobs() {
+      try {
+        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
+        const map = dataRaw ? JSON.parse(dataRaw) : {};
+        const ids = this.getCheckedIds();
+        const jobs = [];
+        for (let i = ids.length - 1; i >= 0; i--) {
+          const id = ids[i];
+          if (map[id]) {
+            jobs.push(map[id]);
+          } else {
+            const found = allJobs.find(j => j.id === id);
+            if (found) {
+              jobs.push(found);
+            }
+          }
+        }
+        return jobs;
+      } catch (e) {
+        return [];
+      }
+    },
+
+    getCheckedCount() {
+      return this.getCheckedIds().length;
+    },
+
+    clearChecked() {
+      localStorage.removeItem(this.KEYS.CHECKED_IDS);
+      localStorage.removeItem(this.KEYS.CHECKED_DATA);
+      this.updateHistoryBadge();
+    },
+
+    saveFetchedJobs(jobsArray) {
+      if (!Array.isArray(jobsArray) || jobsArray.length === 0) return;
+      try {
+        const raw = localStorage.getItem(this.KEYS.FETCHED_ARCHIVE);
+        const map = raw ? JSON.parse(raw) : {};
+        const now = new Date().toISOString();
+        const formatted = new Intl.DateTimeFormat('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }).format(new Date());
+
+        jobsArray.forEach(job => {
+          if (job && job.id) {
+            if (!map[job.id]) {
+              map[job.id] = {
+                ...job,
+                firstFetchedAt: now,
+                formattedFetchedAt: formatted
+              };
+            }
+          }
+        });
+        localStorage.setItem(this.KEYS.FETCHED_ARCHIVE, JSON.stringify(map));
+      } catch (e) {
+        console.error('Error archiving fetched jobs:', e);
+      }
+      this.updateHistoryBadge();
+    },
+
+    getFetchedArchive() {
+      try {
+        const raw = localStorage.getItem(this.KEYS.FETCHED_ARCHIVE);
+        const map = raw ? JSON.parse(raw) : {};
+        return Object.values(map);
+      } catch (e) {
+        return [];
+      }
+    },
+
+    updateHistoryBadge() {
+      const count = this.getCheckedCount();
+      const badge = document.getElementById('taskbar-activity-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+      }
+      const checkedCountTxt = document.getElementById('txt-history-checked-count');
+      if (checkedCountTxt) {
+        checkedCountTxt.textContent = `Checked Jobs (${count})`;
+      }
+      const archiveCount = this.getFetchedArchive().length;
+      const archiveCountTxt = document.getElementById('txt-history-archive-count');
+      if (archiveCountTxt) {
+        archiveCountTxt.textContent = `All Fetched Archive (${archiveCount})`;
+      }
+    }
+  };
 
   // Search Now State - Expanded with Core Engineering & Technology Domains
   const DEFAULT_DOMAINS = [
@@ -134,8 +315,27 @@ const App = (() => {
       };
     });
 
+    // Save fetched jobs to permanent archive
+    JobHistoryManager.saveFetchedJobs(allJobs);
+
+    // Merge previously fetched openings from persistent archive into allJobs if not present
+    const archivedJobs = JobHistoryManager.getFetchedArchive();
+    archivedJobs.forEach(aj => {
+      if (!allJobs.some(j => j.id === aj.id)) {
+        const cat = JobSorter.categorizeJob(aj);
+        allJobs.push({
+          ...aj,
+          primaryCategory: cat.primaryCategory,
+          subCategory: cat.subCategory,
+          subCategoryId: cat.subCategoryId,
+          iconId: cat.iconId
+        });
+      }
+    });
+
     renderJobFeed();
     updateCategoryStats();
+    JobHistoryManager.updateHistoryBadge();
     NotificationManager.checkAndNotifyNewJobs(allJobs);
 
     if (isManualRefresh) {
@@ -344,6 +544,19 @@ const App = (() => {
         renderJobFeed();
       });
     });
+
+    // Secondary Status Filter (Fresh Only vs All Inc. Checked) with localStorage persistence
+    const statusPills = document.querySelectorAll('.sub-pill[data-status]');
+    statusPills.forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.status === activeStatusFilter);
+      pill.addEventListener('click', () => {
+        statusPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeStatusFilter = pill.dataset.status || 'fresh';
+        localStorage.setItem('dominal_feed_status_filter', activeStatusFilter);
+        renderJobFeed();
+      });
+    });
   }
 
   /**
@@ -354,18 +567,29 @@ const App = (() => {
     const countDisplay = document.getElementById('feed-count-display');
     if (!feedContainer) return;
 
-    const filteredJobs = JobSorter.filterJobs(allJobs, {
+    let filteredJobs = JobSorter.filterJobs(allJobs, {
       query: searchQuery,
       category: activeCategoryFilter,
       platform: activePlatformFilter,
       jobType: activeJobTypeFilter
     });
 
+    const totalMatching = filteredJobs.length;
+    const checkedCountInMatch = filteredJobs.filter(j => JobHistoryManager.isChecked(j.id)).length;
+
+    // Filter out checked jobs when activeStatusFilter === 'fresh' (Eliminates repetitive jobs on refresh)
+    if (activeStatusFilter === 'fresh') {
+      filteredJobs = filteredJobs.filter(j => !JobHistoryManager.isChecked(j.id));
+    }
+
     if (countDisplay) {
       const platformLabel = activePlatformFilter === 'linkedin' ? 'LinkedIn' : (activePlatformFilter === 'indeed' ? 'Indeed' : '');
-      const typeLabel = activeJobTypeFilter === 'internship' ? 'Internships' : (activeJobTypeFilter === 'job' ? 'Jobs' : 'Listings');
+      const typeLabel = activeJobTypeFilter === 'internship' ? 'Internships' : (activeJobTypeFilter === 'job' ? 'Jobs' : 'Openings');
       const filterSummary = [platformLabel, typeLabel].filter(Boolean).join(' ');
-      countDisplay.textContent = `Showing ${filteredJobs.length} of ${allJobs.length} ${filterSummary || 'Jobs'}`;
+      const statusNote = (activeStatusFilter === 'fresh' && checkedCountInMatch > 0)
+        ? ` (${checkedCountInMatch} checked hidden)`
+        : (activeStatusFilter === 'all' && checkedCountInMatch > 0 ? ` (${checkedCountInMatch} checked)` : '');
+      countDisplay.textContent = `Showing ${filteredJobs.length} of ${allJobs.length} ${filterSummary || 'Listings'}${statusNote}`;
     }
 
     if (filteredJobs.length === 0) {
@@ -402,28 +626,44 @@ const App = (() => {
 
   /**
    * Render Single Job Card HTML (Used in Home Feed & Search Now results)
+   * Includes checkbox tick button, category badge, WhatsApp and LinkedIn buttons
    */
   function renderSingleJobCard(job) {
     const isShared = WhatsAppManager.isJobSent(job.id);
+    const isChecked = JobHistoryManager.isChecked(job.id);
     const isLinkedIn = isLinkedInJob(job);
     const catBadgeClass = getBadgeClass(job.primaryCategory, job.subCategoryId);
 
     return `
-      <article class="job-card ${isShared ? 'is-shared' : ''}" id="card-${escapeHtml(job.id)}">
+      <article class="job-card ${isShared ? 'is-shared' : ''} ${isChecked ? 'is-checked' : ''}" id="card-${escapeHtml(job.id)}" data-job-id="${escapeHtml(job.id)}">
         <div class="job-card-header">
-          <span class="job-category-badge ${catBadgeClass}">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${job.iconId || 'icon-briefcase'}"></use></svg>
-            <span>${escapeHtml(job.subCategory || job.primaryCategory)}</span>
-          </span>
+          <div class="job-header-left">
+            <button type="button" class="job-checkbox-btn ${isChecked ? 'is-checked' : ''}"
+                    onclick="event.stopPropagation(); App.toggleJobChecked('${escapeHtml(job.id)}', event)"
+                    title="${isChecked ? 'Checked (will be hidden from fresh feed on refresh)' : 'Mark job as checked / sent'}"
+                    aria-label="${isChecked ? 'Uncheck job' : 'Check job'}">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${isChecked ? 'icon-check-square' : 'icon-square'}"></use></svg>
+              <span class="btn-check-label">${isChecked ? 'Checked' : 'Mark Done'}</span>
+            </button>
+            <span class="job-category-badge ${catBadgeClass}">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${job.iconId || 'icon-briefcase'}"></use></svg>
+              <span>${escapeHtml(job.subCategory || job.primaryCategory)}</span>
+            </span>
+          </div>
           <span class="job-posted-time">${escapeHtml(job.posted_date || 'Recent')}</span>
         </div>
 
-        ${isShared ? `
+        ${isChecked ? `
+          <div class="job-checked-ribbon">
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+            <span>Saved in Checked History</span>
+          </div>
+        ` : (isShared ? `
           <div class="job-shared-ribbon">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
             <span>Shared to WhatsApp</span>
           </div>
-        ` : ''}
+        ` : '')}
 
         <h3 class="job-card-title">${escapeHtml(job.title)}</h3>
 
@@ -471,6 +711,75 @@ const App = (() => {
     `;
   }
 
+  /**
+   * Toggle Job Checked Status in-place without removing card from screen
+   */
+  function toggleJobChecked(jobId, event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    const job = allJobs.find(j => j.id === jobId) || JobHistoryManager.getFetchedArchive().find(j => j.id === jobId);
+    const nowChecked = JobHistoryManager.toggleChecked(jobId, job);
+
+    // Update ALL instances of this job card in DOM in-place
+    const cards = document.querySelectorAll(`article.job-card[data-job-id="${jobId}"], #card-${jobId}`);
+    cards.forEach(card => {
+      const btn = card.querySelector('.job-checkbox-btn');
+      const label = card.querySelector('.btn-check-label');
+      const svgUse = btn ? btn.querySelector('use') : null;
+
+      if (nowChecked) {
+        card.classList.add('is-checked');
+        if (btn) {
+          btn.classList.add('is-checked');
+          btn.title = 'Checked (will be hidden from fresh feed on refresh)';
+          btn.setAttribute('aria-label', 'Uncheck job');
+        }
+        if (label) label.textContent = 'Checked';
+        if (svgUse) svgUse.setAttribute('href', '#icon-check-square');
+
+        let ribbon = card.querySelector('.job-checked-ribbon');
+        if (!ribbon) {
+          ribbon = document.createElement('div');
+          ribbon.className = 'job-checked-ribbon';
+          ribbon.innerHTML = `
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+            <span>Saved in Checked History</span>
+          `;
+          const title = card.querySelector('.job-card-title');
+          if (title) {
+            card.insertBefore(ribbon, title);
+          }
+        }
+      } else {
+        card.classList.remove('is-checked');
+        if (btn) {
+          btn.classList.remove('is-checked');
+          btn.title = 'Mark job as checked / sent';
+          btn.setAttribute('aria-label', 'Check job');
+        }
+        if (label) label.textContent = 'Mark Done';
+        if (svgUse) svgUse.setAttribute('href', '#icon-square');
+
+        const ribbon = card.querySelector('.job-checked-ribbon');
+        if (ribbon) ribbon.remove();
+      }
+    });
+
+    JobHistoryManager.updateHistoryBadge();
+
+    if (nowChecked) {
+      showToast('Job marked checked - saved in History');
+    } else {
+      showToast('Job unchecked - returned to fresh feed');
+    }
+
+    if (currentView === 'activity') {
+      renderActivityLog();
+    }
+  }
+
   function getBadgeClass(primary, subCategoryId) {
     if (subCategoryId === 'electrical') return 'badge-electrical';
     if (subCategoryId === 'sales') return 'badge-sales';
@@ -481,11 +790,44 @@ const App = (() => {
 
   /**
    * Handle Share action on job
+   * Automatically marks job as checked in History and updates visual card in-place
    */
   function handleShareJob(jobId) {
-    const job = allJobs.find(j => j.id === jobId);
+    const job = allJobs.find(j => j.id === jobId) || JobHistoryManager.getFetchedArchive().find(j => j.id === jobId);
     if (!job) return;
     WhatsAppManager.shareJob(job);
+
+    // Auto-mark as checked in history
+    if (!JobHistoryManager.isChecked(jobId)) {
+      JobHistoryManager.markChecked(jobId, job);
+      const cards = document.querySelectorAll(`article.job-card[data-job-id="${jobId}"], #card-${jobId}`);
+      cards.forEach(card => {
+        card.classList.add('is-checked');
+        const btn = card.querySelector('.job-checkbox-btn');
+        const label = card.querySelector('.btn-check-label');
+        const svgUse = btn ? btn.querySelector('use') : null;
+        if (btn) {
+          btn.classList.add('is-checked');
+          btn.title = 'Checked (will be hidden from fresh feed on refresh)';
+        }
+        if (label) label.textContent = 'Checked';
+        if (svgUse) svgUse.setAttribute('href', '#icon-check-square');
+        let ribbon = card.querySelector('.job-checked-ribbon');
+        if (!ribbon) {
+          ribbon = document.createElement('div');
+          ribbon.className = 'job-checked-ribbon';
+          ribbon.innerHTML = `
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+            <span>Saved in Checked History</span>
+          `;
+          const title = card.querySelector('.job-card-title');
+          if (title) {
+            card.insertBefore(ribbon, title);
+          }
+        }
+      });
+      JobHistoryManager.updateHistoryBadge();
+    }
   }
 
   /**
@@ -739,6 +1081,16 @@ const App = (() => {
     matched = matched.slice(0, count);
     lastSearchResults = matched;
 
+    // Save newly matched jobs to persistent archive
+    JobHistoryManager.saveFetchedJobs(matched);
+
+    // Add newly discovered jobs into allJobs so they are immediately available on Home Page feed too!
+    matched.forEach(mj => {
+      if (!allJobs.some(j => j.id === mj.id)) {
+        allJobs.unshift(mj);
+      }
+    });
+
     if (progressBar) progressBar.style.width = '100%';
     await new Promise(r => setTimeout(r, 150));
     if (isSearchingCanceled) return;
@@ -746,11 +1098,12 @@ const App = (() => {
     // Record in Search History
     saveSearchHistory(domain, platform, matched.length, matched.map(j => j.id));
 
-    // Render Results on Search Now view
+    // Render Results on Search Now view and Home Feed
     renderSearchResults();
     renderSearchHistory();
     renderJobFeed();
     updateCategoryStats();
+    JobHistoryManager.updateHistoryBadge();
 
     // Reset UI
     if (progressCard) progressCard.style.display = 'none';
@@ -997,9 +1350,10 @@ const App = (() => {
     activeCategoryFilter = 'all';
     activePlatformFilter = 'all';
     activeJobTypeFilter = 'all';
-    localStorage.setItem('起動_reset', Date.now());
+    activeStatusFilter = 'fresh';
     localStorage.setItem('dominal_platform_filter', 'all');
     localStorage.setItem('dominal_type_filter', 'all');
+    localStorage.setItem('dominal_feed_status_filter', 'fresh');
 
     const searchInput = document.getElementById('input-job-search');
     if (searchInput) {
@@ -1021,62 +1375,158 @@ const App = (() => {
       p.classList.toggle('active', p.dataset.type === 'all');
     });
 
+    document.querySelectorAll('.sub-pill[data-status]').forEach(p => {
+      p.classList.toggle('active', p.dataset.status === 'fresh');
+    });
+
     renderJobFeed();
   }
 
+  function initActivityLog() {
+    renderActivityLog();
+  }
+
+  function switchHistoryTab(tabName) {
+    currentHistoryTab = tabName === 'archive' ? 'archive' : 'checked';
+    const tabChecked = document.getElementById('tab-history-checked');
+    const tabArchive = document.getElementById('tab-history-archive');
+    if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
+    if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
+    renderActivityLog();
+  }
+
+  function clearCheckedHistory() {
+    JobHistoryManager.clearChecked();
+    renderActivityLog();
+    renderJobFeed();
+    showToast('Checked history cleared. Jobs restored to fresh feed.');
+  }
+
+  function uncheckJob(jobId) {
+    JobHistoryManager.uncheck(jobId);
+    renderActivityLog();
+    renderJobFeed();
+    showToast('Job unchecked and restored to fresh feed');
+  }
+
   /**
-   * Render Activity / Sent Log View
+   * Render Job History & Checked View (View 4)
+   * Supports two distinct tabs:
+   * 1. Checked Jobs: Openings reviewed, sent to WhatsApp, or ticked by user
+   * 2. All Fetched Archive: All openings ever fetched by scraper or Search Now
    */
   function renderActivityLog() {
     const listContainer = document.getElementById('activity-log-list');
-    const badgeTaskbar = document.getElementById('taskbar-activity-badge');
     if (!listContainer) return;
 
-    const log = WhatsAppManager.getSentLog();
+    JobHistoryManager.updateHistoryBadge();
 
-    if (badgeTaskbar) {
-      badgeTaskbar.textContent = log.length;
-      badgeTaskbar.style.display = log.length > 0 ? 'inline-block' : 'none';
+    const tabChecked = document.getElementById('tab-history-checked');
+    const tabArchive = document.getElementById('tab-history-archive');
+    if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
+    if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
+
+    if (currentHistoryTab === 'checked') {
+      const checkedJobs = JobHistoryManager.getCheckedJobs();
+      if (checkedJobs.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
+            </div>
+            <h3>No Checked Jobs Yet</h3>
+            <p>Tick the checkbox on any job card to save it here and avoid seeing repetitive postings on refresh.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = checkedJobs.map(job => {
+        const isLinkedIn = isLinkedInJob(job);
+        return `
+          <div class="activity-item" id="hist-item-${escapeHtml(job.id)}">
+            <div class="activity-top">
+              <h4 class="activity-title">${escapeHtml(job.title)}</h4>
+              <span class="activity-timestamp">${escapeHtml(job.formattedCheckedAt || 'Recently Checked')}</span>
+            </div>
+            <div class="activity-meta">
+              <span><strong>Company:</strong> ${escapeHtml(job.company)}</span>
+              <span><strong>Location:</strong> ${escapeHtml(job.location || 'Open')}</span>
+              <span><strong>Category:</strong> ${escapeHtml(job.subCategory || job.primaryCategory || 'Engineering')}</span>
+            </div>
+            ${job.description ? `<div class="activity-snippet">${escapeHtml(job.description.substring(0, 140))}...</div>` : ''}
+            <div class="activity-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+                <span>WhatsApp</span>
+              </button>
+              <button class="btn-sm-action" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
+                <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
+              </button>
+              <button class="btn-uncheck-action" onclick="App.uncheckJob('${escapeHtml(job.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+                <span>Restore to Feed</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      // Archive of all fetched jobs
+      const archive = JobHistoryManager.getFetchedArchive();
+      if (archive.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+            </div>
+            <h3>No Fetched Openings in Archive</h3>
+            <p>All job postings fetched by the scraper or Search Now are permanently archived here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = archive.map(job => {
+        const isLinkedIn = isLinkedInJob(job);
+        const isChecked = JobHistoryManager.isChecked(job.id);
+        return `
+          <div class="activity-item">
+            <div class="activity-top">
+              <h4 class="activity-title">${escapeHtml(job.title)}</h4>
+              <span class="activity-timestamp">${escapeHtml(job.formattedFetchedAt || job.posted_date || 'Archived')}</span>
+            </div>
+            <div class="activity-meta">
+              <span><strong>Company:</strong> ${escapeHtml(job.company)}</span>
+              <span><strong>Platform:</strong> ${escapeHtml(job.platform || (isLinkedIn ? 'LinkedIn' : 'Web'))}</span>
+              <span><strong>Status:</strong> ${isChecked ? 'Checked' : 'Fresh'}</span>
+            </div>
+            <div class="activity-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+                <span>WhatsApp</span>
+              </button>
+              <button class="btn-sm-action" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
+                <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
+              </button>
+              ${isChecked ? `
+                <button class="btn-uncheck-action" onclick="App.uncheckJob('${escapeHtml(job.id)}')">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+                  <span>Restore</span>
+                </button>
+              ` : `
+                <button class="btn-sm-action" onclick="App.toggleJobChecked('${escapeHtml(job.id)}', event)">
+                  <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-square"></use></svg>
+                  <span>Mark Done</span>
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
-
-    if (log.length === 0) {
-      listContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-clock"></use></svg>
-          </div>
-          <h3>No Sent Activity Yet</h3>
-          <p>When you click "WhatsApp" on any job card, it will be logged here with its timestamp.</p>
-        </div>
-      `;
-      return;
-    }
-
-    listContainer.innerHTML = log.map(entry => {
-      return `
-        <div class="activity-item">
-          <div class="activity-top">
-            <h4 class="activity-title">${escapeHtml(entry.title)}</h4>
-            <span class="activity-timestamp">${escapeHtml(entry.formattedDate)}</span>
-          </div>
-          <div class="activity-meta">
-            <span><strong>Company:</strong> ${escapeHtml(entry.company)}</span>
-            <span><strong>Target:</strong> +${escapeHtml(entry.phoneNumber || '918766882442')}</span>
-          </div>
-          <div class="activity-snippet">${escapeHtml(entry.messageSnippet)}</div>
-          <div class="activity-actions">
-            <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(entry.jobId)}')">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
-              <span>Resend</span>
-            </button>
-            <button class="btn-sm-action" onclick="WhatsAppManager.removeSentLogEntry('${escapeHtml(entry.jobId)}')">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
-              <span>Remove</span>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
   }
 
   /**
@@ -1723,6 +2173,11 @@ const App = (() => {
     closeDrawer,
     handleShareJob,
     handleOpenJobLink,
+    toggleJobChecked,
+    uncheckJob,
+    clearCheckedHistory,
+    switchHistoryTab,
+    JobHistoryManager,
     filterByCategoryRule,
     filterByPrimaryCategory,
     selectDomain,
