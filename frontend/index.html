@@ -439,6 +439,29 @@
           </button>
           <button class="filter-pill" data-filter="other">Other</button>
         </div>
+
+        <!-- Secondary Specific Filters: Platform & Job Type -->
+        <div class="secondary-filter-bar">
+          <div class="sub-filter-group" aria-label="Platform Filter">
+            <span class="sub-filter-label">Source:</span>
+            <button class="sub-pill active" id="pill-platform-all" data-platform="all">All</button>
+            <button class="sub-pill" id="pill-platform-linkedin" data-platform="linkedin">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+              <span>LinkedIn Only</span>
+            </button>
+            <button class="sub-pill" id="pill-platform-indeed" data-platform="indeed">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-globe"></use></svg>
+              <span>Indeed</span>
+            </button>
+          </div>
+
+          <div class="sub-filter-group" aria-label="Job Type Filter">
+            <span class="sub-filter-label">Type:</span>
+            <button class="sub-pill active" id="pill-type-all" data-type="all">All</button>
+            <button class="sub-pill" id="pill-type-job" data-type="job">Direct Jobs</button>
+            <button class="sub-pill" id="pill-type-internship" data-type="internship">Internships</button>
+          </div>
+        </div>
       </div>
 
       <div class="feed-summary-bar">
@@ -687,6 +710,29 @@
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="color: #DC2626;"><use href="#icon-lock"></use></svg>
           <span>Lock Dashboard Session</span>
         </button>
+      </div>
+
+      <!-- Device & Push Notifications Box -->
+      <div class="settings-group">
+        <div class="settings-group-title">
+          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+          <span>PWA Job Notifications</span>
+        </div>
+        <p class="settings-group-desc">
+          Get native alerts on your device whenever fresh job postings or internships are scraped by the 2-hour cloud scraper.
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+          <button class="btn-primary" id="btn-toggle-notifications" type="button">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check"></use></svg>
+            <span id="txt-notification-status">Enable Device Notifications</span>
+          </button>
+          <button class="btn-secondary" id="btn-test-notification" type="button">
+            <span>Send Test Alert</span>
+          </button>
+        </div>
+        <p class="form-hint" style="margin-top: 10px;">
+          Note: Native device alerts run directly without requiring VAPID keys. Web Push for when the browser is completely closed uses standard Web Push protocols.
+        </p>
       </div>
 
       <!-- PWA Installation Box -->

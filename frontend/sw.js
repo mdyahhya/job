@@ -100,7 +100,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle custom message from client (e.g. manual cache clear or update check)
+// Handle custom message from client (e.g. manual cache clear or trigger notification)
 self.addEventListener('message', (event) => {
   if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();
@@ -112,4 +112,54 @@ self.addEventListener('message', (event) => {
       }
     });
   }
+  // Local native notification trigger from client PWA
+  if (event.data && event.data.action === 'showNotification') {
+    const title = event.data.title || 'Dominal Technology Jobs';
+    const options = {
+      body: event.data.body || 'New job listings are available.',
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      vibrate: [100, 50, 100],
+      data: { url: event.data.url || './' }
+    };
+    self.registration.showNotification(title, options);
+  }
 });
+
+// Native Notification Click Handler: Focus PWA window or open
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./');
+      }
+    })
+  );
+});
+
+// Web Push API Event Handler
+self.addEventListener('push', (event) => {
+  let data = { title: 'Dominal Technology Jobs', body: 'New jobs scraped and ready to review!' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'Dominal Technology Jobs', body: event.data.text() };
+    }
+  }
+  const options = {
+    body: data.body,
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: { url: data.url || './' }
+  };
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+

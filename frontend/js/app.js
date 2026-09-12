@@ -8,6 +8,8 @@ const App = (() => {
   let allJobs = [];
   let currentView = 'home';
   let activeCategoryFilter = 'all';
+  let activePlatformFilter = localStorage.getItem('dominal_platform_filter') || 'all';
+  let activeJobTypeFilter = localStorage.getItem('dominal_type_filter') || 'all';
   let searchQuery = '';
 
   // Search Now State
@@ -42,6 +44,7 @@ const App = (() => {
     initActivityLog();
     initSecondaryActions();
     initAuthListeners();
+    NotificationManager.init();
 
     // Verify authentication status immediately (Password Protection via Vercel PASS)
     AuthManager.checkAuth();
@@ -124,6 +127,7 @@ const App = (() => {
 
     renderJobFeed();
     updateCategoryStats();
+    NotificationManager.checkAndNotifyNewJobs(allJobs);
 
     if (isManualRefresh) {
       showToast('Jobs feed refreshed successfully');
@@ -267,6 +271,9 @@ const App = (() => {
   /**
    * Search & Filter Logic on Home Feed
    */
+  /**
+   * Search & Filter Logic on Home Feed
+   */
   function initSearchAndFilters() {
     const searchInput = document.getElementById('input-job-search');
     const btnClearSearch = document.getElementById('btn-clear-search');
@@ -302,6 +309,32 @@ const App = (() => {
         renderJobFeed();
       });
     });
+
+    // Secondary Platform Filter (All, LinkedIn Only, Indeed) with localStorage persistence
+    const platformPills = document.querySelectorAll('.sub-pill[data-platform]');
+    platformPills.forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.platform === activePlatformFilter);
+      pill.addEventListener('click', () => {
+        platformPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activePlatformFilter = pill.dataset.platform || 'all';
+        localStorage.setItem('dominal_platform_filter', activePlatformFilter);
+        renderJobFeed();
+      });
+    });
+
+    // Secondary Job Type Filter (All, Direct Jobs, Internships) with localStorage persistence
+    const typePills = document.querySelectorAll('.sub-pill[data-type]');
+    typePills.forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.type === activeJobTypeFilter);
+      pill.addEventListener('click', () => {
+        typePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeJobTypeFilter = pill.dataset.type || 'all';
+        localStorage.setItem('dominal_type_filter', activeJobTypeFilter);
+        renderJobFeed();
+      });
+    });
   }
 
   /**
@@ -314,25 +347,42 @@ const App = (() => {
 
     const filteredJobs = JobSorter.filterJobs(allJobs, {
       query: searchQuery,
-      category: activeCategoryFilter
+      category: activeCategoryFilter,
+      platform: activePlatformFilter,
+      jobType: activeJobTypeFilter
     });
 
     if (countDisplay) {
-      countDisplay.textContent = `Showing ${filteredJobs.length} of ${allJobs.length} Jobs`;
+      const platformLabel = activePlatformFilter === 'linkedin' ? 'LinkedIn' : (activePlatformFilter === 'indeed' ? 'Indeed' : '');
+      const typeLabel = activeJobTypeFilter === 'internship' ? 'Internships' : (activeJobTypeFilter === 'job' ? 'Jobs' : 'Listings');
+      const filterSummary = [platformLabel, typeLabel].filter(Boolean).join(' ');
+      countDisplay.textContent = `Showing ${filteredJobs.length} of ${allJobs.length} ${filterSummary || 'Jobs'}`;
     }
 
     if (filteredJobs.length === 0) {
+      const searchTarget = (searchQuery.trim() || activeCategoryFilter !== 'all' ? activeCategoryFilter : 'software developer');
+      const liveSearchUrl = activePlatformFilter === 'indeed'
+        ? `https://in.indeed.com/jobs?q=${encodeURIComponent(searchTarget)}&l=India`
+        : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(searchTarget)}&location=India`;
+      const platformName = activePlatformFilter === 'indeed' ? 'Indeed' : 'LinkedIn';
+
       feedContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">
             <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-search"></use></svg>
           </div>
-          <h3>No Matching Jobs Found</h3>
-          <p>Try searching with different keywords or clear category filters.</p>
-          <button class="btn-secondary" onclick="App.resetFilters()">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
-            <span>Reset Search & Filters</span>
-          </button>
+          <h3>Not Available</h3>
+          <p>No matching verified jobs found in local database${searchQuery ? ` for "${escapeHtml(searchQuery)}"` : ''}${activePlatformFilter !== 'all' ? ` on ${activePlatformFilter === 'linkedin' ? 'LinkedIn' : 'Indeed'}` : ''}${activeJobTypeFilter !== 'all' ? ` (${activeJobTypeFilter === 'internship' ? 'Internships' : 'Direct Jobs'})` : ''}.</p>
+          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
+            <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${activePlatformFilter === 'indeed' ? '#icon-globe' : '#icon-linkedin'}"></use></svg>
+              <span>Search Live on ${platformName} App</span>
+            </a>
+            <button class="btn-secondary" onclick="App.resetFilters()">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+              <span>Reset Search & Filters</span>
+            </button>
+          </div>
         </div>
       `;
       return;
@@ -598,35 +648,18 @@ const App = (() => {
 
     await new Promise(r => setTimeout(r, 200));
 
-    // Filter real jobs matching domain keywords and platform
-    const domainWords = domain.toLowerCase().split(/[\s&/]+/).filter(w => w.length > 2);
-    let matched = allJobs.filter(job => {
-      const title = (job.title || '').toLowerCase();
-      const desc = (job.description || '').toLowerCase();
-      const cat = (job.subCategory || job.primaryCategory || '').toLowerCase();
-      const link = (job.job_link || '').toLowerCase();
-
-      // Platform filter
-      if (platform === 'LinkedIn' && !link.includes('linkedin.com')) return false;
-      if (platform === 'Indeed' && !link.includes('indeed.com')) return false;
-
-      const fullText = `${title} ${desc} ${cat}`;
-      return domainWords.some(w => fullText.includes(w));
+    // Filter real jobs matching domain keywords and platform strictly
+    const platformFilterVal = platform.toLowerCase() === 'indeed' ? 'indeed' : (platform.toLowerCase() === 'linkedin' ? 'linkedin' : 'all');
+    let matched = JobSorter.filterJobs(allJobs, {
+      query: domain,
+      category: 'all',
+      platform: platformFilterVal,
+      jobType: 'all'
     });
 
-    // If matches are fewer than count, supplement with real jobs from the same platform
-    if (matched.length < count) {
-      const supplemental = allJobs.filter(job => {
-        if (matched.some(m => m.id === job.id)) return false;
-        const link = (job.job_link || '').toLowerCase();
-        if (platform === 'LinkedIn' && !link.includes('linkedin.com')) return false;
-        if (platform === 'Indeed' && !link.includes('indeed.com')) return false;
-        return true;
-      });
-      matched = [...matched, ...supplemental].slice(0, count);
-    } else {
-      matched = matched.slice(0, count);
-    }
+    // Enforce strict matching: no arbitrary supplemental dumping!
+    // Truncate to user-requested count if more exist
+    matched = matched.slice(0, count);
 
     lastSearchResults = matched;
 
@@ -650,7 +683,7 @@ const App = (() => {
     if (matched.length > 0) {
       showToast(`Showing ${matched.length} verified jobs for ${domain}!`);
     } else {
-      showToast(`No cached listings found. Tap Open ${platform} App below for live jobs.`);
+      showToast(`Not available in local database. Tap Open ${platform} App below for live search.`);
     }
   }
 
@@ -662,18 +695,38 @@ const App = (() => {
 
     if (!section || !container) return;
 
-    if (lastSearchResults.length === 0) {
-      section.style.display = 'none';
-      return;
-    }
-
     section.style.display = 'block';
-    if (badge) badge.textContent = `${lastSearchResults.length} Verified Jobs`;
-    if (headline) headline.textContent = `Verified Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
 
     const liveSearchUrl = (selectedSearchPlatform === 'Indeed')
       ? `https://in.indeed.com/jobs?q=${encodeURIComponent(selectedSearchDomain)}&l=India&fromage=1`
       : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(selectedSearchDomain)}&location=India&f_TPR=r86400`;
+
+    if (lastSearchResults.length === 0) {
+      if (badge) badge.textContent = `0 Jobs`;
+      if (headline) headline.textContent = `Search Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
+
+      container.innerHTML = `
+        <div class="empty-state" style="padding: 24px 16px; text-align: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: #ffffff;">
+          <div class="empty-state-icon">
+            <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-search"></use></svg>
+          </div>
+          <h3 style="margin-top: 10px; color: var(--text-color);">Not Available in Local Database</h3>
+          <p style="color: var(--text-light); max-width: 460px; margin: 8px auto 16px;">
+            No verified jobs currently matched <strong>"${escapeHtml(selectedSearchDomain)}"</strong> on <strong>${escapeHtml(selectedSearchPlatform)}</strong> in the local database.
+          </p>
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${selectedSearchPlatform === 'Indeed' ? '#icon-globe' : '#icon-linkedin'}"></use></svg>
+              <span>Search Live on ${escapeHtml(selectedSearchPlatform)} App</span>
+            </a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (badge) badge.textContent = `${lastSearchResults.length} Verified Jobs`;
+    if (headline) headline.textContent = `Verified Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
 
     const liveActionHtml = `
       <div class="search-live-deep-link-card">
@@ -860,13 +913,30 @@ const App = (() => {
   function resetFilters() {
     searchQuery = '';
     activeCategoryFilter = 'all';
+    activePlatformFilter = 'all';
+    activeJobTypeFilter = 'all';
+    localStorage.setItem('起動_reset', Date.now());
+    localStorage.setItem('dominal_platform_filter', 'all');
+    localStorage.setItem('dominal_type_filter', 'all');
 
     const searchInput = document.getElementById('input-job-search');
-    if (searchInput) searchInput.value = '';
+    if (searchInput) {
+      searchInput.value = '';
+      const btnClear = document.getElementById('btn-clear-search');
+      if (btnClear) btnClear.classList.remove('visible');
+    }
 
     const filterPills = document.querySelectorAll('.filter-pill');
     filterPills.forEach(p => {
       p.classList.toggle('active', p.dataset.filter === 'all');
+    });
+
+    document.querySelectorAll('.sub-pill[data-platform]').forEach(p => {
+      p.classList.toggle('active', p.dataset.platform === 'all');
+    });
+
+    document.querySelectorAll('.sub-pill[data-type]').forEach(p => {
+      p.classList.toggle('active', p.dataset.type === 'all');
     });
 
     renderJobFeed();
@@ -1321,6 +1391,177 @@ const App = (() => {
     ];
   }
 
+  /**
+   * PWA Native Notification Manager
+   * Uses browser Notification API and ServiceWorkerRegistration.showNotification.
+   * Works on-device for self-alerts without VAPID keys or Vercel edge functions.
+   */
+  const NotificationManager = {
+    storageKey: 'dominal_notifications_enabled',
+    lastSeenKey: 'dominal_last_seen_job_id',
+
+    init() {
+      const btnToggle = document.getElementById('btn-toggle-notifications');
+      const btnTest = document.getElementById('btn-test-notification');
+
+      this.updateUI();
+
+      if (btnToggle) {
+        btnToggle.addEventListener('click', () => this.toggleNotifications());
+      }
+
+      if (btnTest) {
+        btnTest.addEventListener('click', () => this.sendTestNotification());
+      }
+    },
+
+    isEnabled() {
+      return localStorage.getItem(this.storageKey) === 'true' &&
+             typeof Notification !== 'undefined' &&
+             Notification.permission === 'granted';
+    },
+
+    updateUI() {
+      const txtStatus = document.getElementById('txt-notification-status');
+      const btnToggle = document.getElementById('btn-toggle-notifications');
+      if (!txtStatus || !btnToggle) return;
+
+      if (typeof Notification === 'undefined') {
+        txtStatus.textContent = 'Notifications Not Supported';
+        btnToggle.disabled = true;
+        return;
+      }
+
+      if (Notification.permission === 'granted' && localStorage.getItem(this.storageKey) === 'true') {
+        txtStatus.textContent = 'Notifications Active (Tap to Disable)';
+        btnToggle.classList.remove('btn-secondary');
+        btnToggle.classList.add('btn-primary');
+      } else if (Notification.permission === 'denied') {
+        txtStatus.textContent = 'Notifications Blocked in Browser';
+      } else {
+        txtStatus.textContent = 'Enable Device Notifications';
+      }
+    },
+
+    async toggleNotifications() {
+      if (typeof Notification === 'undefined') {
+        showToast('Notifications are not supported in this browser.');
+        return;
+      }
+
+      if (this.isEnabled()) {
+        localStorage.setItem(this.storageKey, 'false');
+        this.updateUI();
+        showToast('Device job notifications disabled.');
+        return;
+      }
+
+      if (Notification.permission === 'denied') {
+        showToast('Notifications are blocked in browser settings.');
+        return;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          localStorage.setItem(this.storageKey, 'true');
+          this.updateUI();
+          showToast('Device notifications enabled!');
+          this.triggerAlert('Dominal Job Alerts Active', {
+            body: 'You will receive native alerts whenever fresh jobs or internships are scraped.',
+            tag: 'notif-enabled'
+          });
+        } else {
+          showToast('Notification permission was not granted.');
+          this.updateUI();
+        }
+      } catch (err) {
+        console.error('Error requesting notification permission:', err);
+      }
+    },
+
+    async sendTestNotification() {
+      if (typeof Notification === 'undefined') {
+        showToast('Notifications are not supported on this device.');
+        return;
+      }
+
+      if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          showToast('Please enable notifications first.');
+          return;
+        }
+        localStorage.setItem(this.storageKey, 'true');
+        this.updateUI();
+      }
+
+      const testJob = (allJobs && allJobs.length > 0) ? allJobs[0] : null;
+      const title = testJob ? `New Job Alert: ${testJob.title}` : 'Dominal Job Alert (Test)';
+      const body = testJob
+        ? `${testJob.company} (${testJob.location || 'India'}) • Tap to view opening.`
+        : 'Native PWA notification is working! You will receive alerts when new jobs arrive.';
+
+      await this.triggerAlert(title, {
+        body: body,
+        tag: 'test-job-alert',
+        data: { url: testJob ? testJob.job_link : './#home' }
+      });
+
+      showToast('Test notification sent to your device!');
+    },
+
+    async triggerAlert(title, options = {}) {
+      const defaultOptions = {
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png',
+        tag: 'job-alert-' + Date.now(),
+        ...options
+      };
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          if (reg && reg.showNotification) {
+            await reg.showNotification(title, defaultOptions);
+            return;
+          }
+        }
+        new Notification(title, defaultOptions);
+      } catch (err) {
+        console.warn('Native notification trigger fallback:', err);
+        try {
+          new Notification(title, defaultOptions);
+        } catch (e) {}
+      }
+    },
+
+    checkAndNotifyNewJobs(jobs) {
+      if (!this.isEnabled() || !Array.isArray(jobs) || jobs.length === 0) return;
+
+      const lastSeenId = localStorage.getItem(this.lastSeenKey);
+      if (!lastSeenId) {
+        localStorage.setItem(this.lastSeenKey, jobs[0].id);
+        return;
+      }
+
+      const newestIndex = jobs.findIndex(j => j.id === lastSeenId);
+      if (newestIndex > 0) {
+        const freshCount = newestIndex;
+        const topJob = jobs[0];
+        localStorage.setItem(this.lastSeenKey, topJob.id);
+
+        this.triggerAlert(`${freshCount} New Jobs Available`, {
+          body: `${topJob.title} at ${topJob.company} & ${freshCount - 1} other new openings.`,
+          tag: 'new-jobs-batch',
+          data: { url: './#home' }
+        });
+      } else if (newestIndex === -1 && jobs.length > 0) {
+        localStorage.setItem(this.lastSeenKey, jobs[0].id);
+      }
+    }
+  };
+
   return {
     init,
     switchView,
@@ -1335,6 +1576,7 @@ const App = (() => {
     deleteSearchHistoryItem,
     resetFilters,
     showToast,
+    NotificationManager,
     handlePasswordSubmit: () => AuthManager.submitPassword(),
     lockSession: () => AuthManager.lockSession()
   };

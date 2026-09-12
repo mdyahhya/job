@@ -1,148 +1,192 @@
 /**
  * Dominal Technology Jobs - Rule-Based Sorter & Categorization Engine
- * No AI dependencies; deterministic keyword matching with fallback to 'Other'.
+ * Deterministic title-first keyword matching with strict role separation.
+ * Supports dedicated filters for:
+ * 1. Category (IT, Non-IT, Electrical, Sales, Other)
+ * 2. Platform (LinkedIn Only, Indeed Only, All Platforms)
+ * 3. Job Type (Full-time Jobs vs Internships & Trainee)
+ * Strictly zero emojis.
  */
 
 const JobSorter = (() => {
-  // Keyword definitions
-  const IT_KEYWORDS = [
-    'software', 'developer', 'full stack', 'fullstack', 'backend', 'back-end',
-    'frontend', 'front-end', 'python', 'ai engineer', 'ai developer', 'machine learning',
-    'deep learning', 'nlp', 'llm', 'data scientist', 'data engineer', 'qa', 'quality assurance',
-    'tester', 'testing', 'automation tester', 'devops', 'cloud', 'aws', 'azure', 'gcp',
-    'react', 'angular', 'vue', 'node', 'java', 'spring', 'cybersecurity', 'security engineer',
-    'database', 'sql', 'nosql', 'web', 'flutter', 'android', 'ios', 'mobile app', 'ui/ux',
-    'system architect', 'golang', 'c++', 'c#', '.net', 'scrum master', 'kubernetes', 'docker'
-  ];
-
-  const NON_IT_KEYWORDS = [
-    'electrical', 'electrician', 'power systems', 'substation', 'switchgear', 'embedded',
-    'hardware', 'vlsi', 'pcb', 'electronics', 'mechanical', 'cad', 'solidworks', 'catia',
-    'automotive', 'manufacturing', 'plant engineer', 'sales', 'business development', 'b2b',
-    'inside sales', 'account manager', 'marketing', 'digital marketing', 'seo', 'ppc',
-    'content strategist', 'hr', 'human resources', 'talent acquisition', 'recruiter',
-    'recruitment', 'payroll', 'finance', 'financial', 'accountant', 'accounts', 'fp&a',
-    'audit', 'taxation', 'operations', 'supply chain', 'logistics', 'warehouse', 'civil',
-    'site engineer', 'procurement', 'admin', 'executive assistant', 'customer support', 'bpo'
-  ];
-
-  const SUBCATEGORY_RULES = [
-    {
-      id: 'electrical',
-      name: 'Electrical & Hardware',
-      icon: 'icon-lightning',
-      keywords: ['electrical', 'electrician', 'power systems', 'substation', 'switchgear', 'embedded', 'hardware', 'vlsi', 'pcb', 'circuit', 'electronics']
-    },
-    {
-      id: 'sales',
-      name: 'Sales & Business Dev',
-      icon: 'icon-chart',
-      keywords: ['sales', 'business development', 'b2b', 'account executive', 'inside sales', 'bdr', 'sdr', 'tele-sales', 'quota', 'pipeline']
-    },
-    {
-      id: 'software',
-      name: 'Software Engineering',
-      icon: 'icon-code',
-      keywords: ['software', 'developer', 'full stack', 'backend', 'frontend', 'python', 'react', 'java', 'web', 'node', 'mobile app', 'c++', '.net']
-    },
-    {
-      id: 'ai_data',
-      name: 'AI & Data Science',
-      icon: 'icon-cpu',
-      keywords: ['ai engineer', 'ai developer', 'machine learning', 'data scientist', 'data engineer', 'llm', 'nlp', 'generative ai', 'pytorch']
-    },
-    {
-      id: 'devops_qa',
-      name: 'DevOps & QA',
-      icon: 'icon-server',
-      keywords: ['devops', 'cloud', 'qa', 'tester', 'testing', 'kubernetes', 'docker', 'terraform', 'automation tester', 'ci/cd']
-    },
-    {
-      id: 'mechanical',
-      name: 'Mechanical & CAD',
-      icon: 'icon-wrench',
-      keywords: ['mechanical', 'cad', 'solidworks', 'catia', 'automotive', 'manufacturing', 'tooling', 'transmission']
-    },
-    {
-      id: 'hr_finance',
-      name: 'HR, Finance & Operations',
-      icon: 'icon-briefcase',
-      keywords: ['hr', 'human resources', 'talent acquisition', 'recruiter', 'finance', 'accountant', 'fp&a', 'operations', 'supply chain', 'logistics']
-    }
-  ];
 
   /**
-   * Helper to test whether any keyword in list exists in text.
+   * Internship Detection Helper (Whole-word regex to avoid false positives like 'international')
    */
-  function containsKeyword(text, keywords) {
-    if (!text) return false;
-    const lower = text.toLowerCase();
-    return keywords.some(kw => {
-      // Regex word boundary matching when possible, or includes
-      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i');
-      return regex.test(lower);
-    });
+  function isInternship(job) {
+    if (!job) return false;
+    const title = (job.title || '').toLowerCase();
+    const type = (job.job_type || '').toLowerCase();
+    const internPattern = /\b(intern|internship|trainee|apprentice)\b/i;
+    return internPattern.test(title) || internPattern.test(type);
   }
 
   /**
-   * Categorize a single job into primary category (IT, Non-IT, Other) and subcategory.
+   * Platform Detection Helpers
+   */
+  function isLinkedInJob(job) {
+    if (!job) return false;
+    const link = (job.job_link || '').toLowerCase();
+    const platform = (job.platform || '').toLowerCase();
+    return platform === 'linkedin' || link.includes('linkedin.com');
+  }
+
+  function isIndeedJob(job) {
+    if (!job) return false;
+    const link = (job.job_link || '').toLowerCase();
+    const platform = (job.platform || '').toLowerCase();
+    return platform === 'indeed' || link.includes('indeed.com');
+  }
+
+  /**
+   * Title-First Strict Categorization
+   * Sales & Marketing are strictly isolated from IT/Software Development.
    */
   function categorizeJob(job) {
-    const combinedText = `${job.title || ''} ${job.description || ''} ${job.company || ''}`;
-    
-    // Check specific subcategory first
-    let subCategoryMatch = null;
-    for (const rule of SUBCATEGORY_RULES) {
-      if (containsKeyword(job.title, rule.keywords) || containsKeyword(combinedText, rule.keywords)) {
-        subCategoryMatch = rule;
-        break;
-      }
+    if (!job) {
+      return {
+        primaryCategory: 'Other',
+        subCategory: 'General',
+        subCategoryId: 'other',
+        iconId: 'icon-briefcase',
+        isInternship: false
+      };
     }
 
-    // Determine primary category
-    let primaryCategory = 'Other';
-    let icon = 'icon-briefcase';
+    const titleLower = (job.title || '').toLowerCase();
+    const descLower = (job.description || '').toLowerCase();
+    const internshipStatus = isInternship(job);
 
-    if (containsKeyword(job.title, IT_KEYWORDS) || containsKeyword(combinedText, IT_KEYWORDS)) {
-      primaryCategory = 'IT';
-      icon = 'icon-code';
-    } else if (containsKeyword(job.title, NON_IT_KEYWORDS) || containsKeyword(combinedText, NON_IT_KEYWORDS)) {
-      primaryCategory = 'Non-IT';
-      icon = 'icon-briefcase';
+    // RULE 1: Sales, B2B & Business Development (ALWAYS Non-IT, even if title contains 'IT' or 'Software')
+    // E.g., 'IT Sales Executive' or 'Software Sales' is a Sales role, NOT a developer role.
+    const isSales = /\b(sales|business development|b2b|account executive|inside sales|tele-sales|field sales|lead generation|sdr|bdr|commercial|retail|selling|counter sales)\b/i.test(titleLower);
+    if (isSales) {
+      return {
+        primaryCategory: 'Non-IT',
+        subCategory: 'Sales & Business Dev',
+        subCategoryId: 'sales',
+        iconId: 'icon-chart',
+        isInternship: internshipStatus
+      };
     }
 
-    // If subcategory has a specific icon (e.g. electrical lightning, sales chart)
-    if (subCategoryMatch) {
-      icon = subCategoryMatch.icon;
-      // Refine primary if subcategory is known
-      if (['electrical', 'sales', 'mechanical', 'hr_finance'].includes(subCategoryMatch.id)) {
-        primaryCategory = 'Non-IT';
-      } else if (['software', 'ai_data', 'devops_qa'].includes(subCategoryMatch.id)) {
-        primaryCategory = 'IT';
+    // RULE 2: Electrical, Hardware, VLSI & Power Systems (ALWAYS Non-IT)
+    const isElectrical = /\b(electrical|electrician|power systems|substation|switchgear|embedded|hardware|vlsi|pcb|electronics|circuit design|maintenance engineer)\b/i.test(titleLower);
+    if (isElectrical) {
+      return {
+        primaryCategory: 'Non-IT',
+        subCategory: 'Electrical & Hardware',
+        subCategoryId: 'electrical',
+        iconId: 'icon-lightning',
+        isInternship: internshipStatus
+      };
+    }
+
+    // RULE 3: Mechanical, CAD, Automotive, Civil & Manufacturing (Non-IT)
+    const isMechanical = /\b(mechanical|cad|solidworks|catia|automotive|plant engineer|tooling|machinist|piping|production engineer|manufacturing)\b/i.test(titleLower);
+    if (isMechanical) {
+      return {
+        primaryCategory: 'Non-IT',
+        subCategory: 'Mechanical & CAD',
+        subCategoryId: 'mechanical',
+        iconId: 'icon-wrench',
+        isInternship: internshipStatus
+      };
+    }
+
+    // RULE 4: HR, Recruitment, Finance, Accounting & Operations (Non-IT)
+    const isHrFinanceOps = /\b(hr|human resources|talent acquisition|recruiter|finance|accountant|fp&a|payroll|accounts|operations|supply chain|logistics|warehouse|civil|interior|site engineer|procurement|executive assistant|bpo)\b/i.test(titleLower);
+    if (isHrFinanceOps) {
+      return {
+        primaryCategory: 'Non-IT',
+        subCategory: 'HR, Finance & Operations',
+        subCategoryId: 'hr_finance',
+        iconId: 'icon-briefcase',
+        isInternship: internshipStatus
+      };
+    }
+
+    // RULE 5: Software Engineering, AI, Cloud & Tech Roles (IT)
+    const isSoftware = /\b(software|developer|engineer|full stack|fullstack|backend|frontend|python|java|react|angular|node|ai|machine learning|data scientist|data engineer|qa|tester|devops|cloud|aws|azure|golang|c\+\+|\.net|flutter|android|ios|web|programmer|coder|architect)\b/i.test(titleLower);
+    if (isSoftware) {
+      let sub = 'Software Engineering';
+      let subId = 'software';
+      let icon = 'icon-code';
+
+      if (/\b(ai|machine learning|deep learning|nlp|llm|data scientist|data engineer|generative ai)\b/i.test(titleLower)) {
+        sub = 'AI & Data Science';
+        subId = 'ai_data';
+        icon = 'icon-cpu';
+      } else if (/\b(devops|cloud|qa|tester|testing|kubernetes|docker|terraform|infrastructure)\b/i.test(titleLower)) {
+        sub = 'DevOps & QA';
+        subId = 'devops_qa';
+        icon = 'icon-server';
       }
+
+      return {
+        primaryCategory: 'IT',
+        subCategory: sub,
+        subCategoryId: subId,
+        iconId: icon,
+        isInternship: internshipStatus
+      };
+    }
+
+    // Fallback: If title is generic (e.g. 'Project Lead', 'Consultant'), check description for strong signals
+    if (/\b(python|react|java|spring boot|django|fastapi|golang|kubernetes|docker|fullstack|backend developer)\b/i.test(descLower) && !/\b(sales|b2b|cold call)\b/i.test(descLower)) {
+      return {
+        primaryCategory: 'IT',
+        subCategory: 'Software Engineering',
+        subCategoryId: 'software',
+        iconId: 'icon-code',
+        isInternship: internshipStatus
+      };
     }
 
     return {
-      primaryCategory,
-      subCategory: subCategoryMatch ? subCategoryMatch.name : (primaryCategory === 'Other' ? 'General' : primaryCategory),
-      subCategoryId: subCategoryMatch ? subCategoryMatch.id : 'other',
-      iconId: icon
+      primaryCategory: 'Other',
+      subCategory: 'General',
+      subCategoryId: 'other',
+      iconId: 'icon-briefcase',
+      isInternship: internshipStatus
     };
   }
 
   /**
-   * Filter job list by search query and category.
+   * Filter job list by search query, category, platform, and job type.
    */
-  function filterJobs(jobs, { query = '', category = 'all' } = {}) {
+  function filterJobs(jobs, {
+    query = '',
+    category = 'all',
+    platform = 'all',
+    jobType = 'all'
+  } = {}) {
     if (!Array.isArray(jobs)) return [];
-    
+
     const cleanQuery = query.trim().toLowerCase();
+    const queryWords = cleanQuery.split(/[\s,+/]+/).filter(w => w.length > 1);
+
+    // List of software-specific technology keywords
+    const TECH_STACK_TERMS = [
+      'python', 'java', 'react', 'node', 'django', 'fastapi', 'angular', 'vue',
+      'golang', 'c++', 'c#', '.net', 'aws', 'docker', 'devops', 'backend',
+      'frontend', 'fullstack', 'full stack', 'developer', 'development', 'software',
+      'programmer', 'coding', 'web developer'
+    ];
 
     return jobs.filter(job => {
       const catInfo = categorizeJob(job);
 
-      // Category matching
+      // 1. Platform Filter
+      if (platform === 'linkedin' && !isLinkedInJob(job)) return false;
+      if (platform === 'indeed' && !isIndeedJob(job)) return false;
+
+      // 2. Job Type Filter (Jobs vs Internships)
+      const intern = isInternship(job);
+      if (jobType === 'internship' && !intern) return false;
+      if (jobType === 'job' && intern) return false;
+
+      // 3. Category Filter
       if (category && category !== 'all') {
         if (category === 'it' && catInfo.primaryCategory !== 'IT') return false;
         if (category === 'non-it' && catInfo.primaryCategory !== 'Non-IT') return false;
@@ -151,10 +195,45 @@ const JobSorter = (() => {
         if (category === 'other' && catInfo.primaryCategory !== 'Other') return false;
       }
 
-      // Keyword query matching
-      if (cleanQuery) {
-        const searchableText = `${job.title || ''} ${job.company || ''} ${job.location || ''} ${job.description || ''} ${job.experience || ''} ${catInfo.subCategory}`.toLowerCase();
-        if (!searchableText.includes(cleanQuery)) {
+      // 4. Strict Keyword Matching
+      if (queryWords.length > 0) {
+        const title = (job.title || '').toLowerCase();
+        const company = (job.company || '').toLowerCase();
+        const location = (job.location || '').toLowerCase();
+        const desc = (job.description || '').toLowerCase();
+
+        // Check if query is looking for a software technology (e.g. Python, React, Development)
+        const isTechQuery = queryWords.some(w => TECH_STACK_TERMS.includes(w));
+        if (isTechQuery && catInfo.primaryCategory !== 'IT') {
+          // Never match a non-IT job (like Sales, HR, Civil) for a tech stack search
+          return false;
+        }
+
+        // Specifically block Sales & Business Development roles when searching for "developer" or "development"
+        const isDevQuery = queryWords.some(w => ['developer', 'development', 'dev', 'software', 'programmer'].includes(w));
+        const isExplicitSalesQuery = queryWords.some(w => ['sales', 'b2b', 'business', 'bdm', 'sdr'].includes(w));
+        if (isDevQuery && !isExplicitSalesQuery && catInfo.subCategoryId === 'sales') {
+          return false;
+        }
+
+        // Each query word must match in title, company, location, or strictly in description
+        const allWordsMatch = queryWords.every(word => {
+          // Normalize developer <-> development
+          if (word === 'development' || word === 'developer') {
+            if (title.includes('develop') || desc.includes('developer') || desc.includes('development')) {
+              return true;
+            }
+          }
+
+          if (title.includes(word) || company.includes(word) || location.includes(word)) {
+            return true;
+          }
+          // Whole-word match in description to prevent substring collisions
+          const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          return wordRegex.test(desc);
+        });
+
+        if (!allWordsMatch) {
           return false;
         }
       }
@@ -166,17 +245,34 @@ const JobSorter = (() => {
   /**
    * Calculate aggregated category statistics.
    */
-  function getCategoryStats(jobs) {
+  function getCategoryStats(jobs, { platform = 'all', jobType = 'all' } = {}) {
     const stats = {
-      total: jobs.length,
+      total: 0,
       it: 0,
       nonIt: 0,
       electrical: 0,
       sales: 0,
-      other: 0
+      other: 0,
+      internships: 0,
+      linkedin: 0
     };
 
+    if (!Array.isArray(jobs)) return stats;
+
     jobs.forEach(job => {
+      // Platform filter consideration
+      if (platform === 'linkedin' && !isLinkedInJob(job)) return;
+      if (platform === 'indeed' && !isIndeedJob(job)) return;
+
+      // Job type filter consideration
+      const intern = isInternship(job);
+      if (jobType === 'internship' && !intern) return;
+      if (jobType === 'job' && intern) return;
+
+      stats.total++;
+      if (intern) stats.internships++;
+      if (isLinkedInJob(job)) stats.linkedin++;
+
       const cat = categorizeJob(job);
       if (cat.primaryCategory === 'IT') stats.it++;
       else if (cat.primaryCategory === 'Non-IT') stats.nonIt++;
@@ -193,8 +289,16 @@ const JobSorter = (() => {
     categorizeJob,
     filterJobs,
     getCategoryStats,
-    IT_KEYWORDS,
-    NON_IT_KEYWORDS,
-    SUBCATEGORY_RULES
+    isInternship,
+    isLinkedInJob,
+    isIndeedJob
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.JobSorter = JobSorter;
+}
+if (typeof module !== 'undefined') {
+  module.exports = JobSorter;
+}
+

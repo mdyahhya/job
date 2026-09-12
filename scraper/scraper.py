@@ -37,7 +37,7 @@ def run_scraper():
         print("Scraping live verified jobs via python-jobspy...")
         jobs_df = scrape_jobs(
             site_name=["linkedin", "indeed"],
-            search_term="software engineer OR python developer OR full stack OR electrical engineer OR sales executive OR b2b sales",
+            search_term="software engineer OR python developer OR full stack developer OR electrical engineer OR b2b sales OR software intern OR python intern",
             location="India",
             results_wanted=50,
             hours_old=72,
@@ -64,8 +64,13 @@ def run_scraper():
                 if not location or location.lower() == "nan":
                     location = "India"
 
-                job_type = str(row.get("job_type", "") or "Full-time").capitalize()
-                if job_type.lower() in ("nan", "none", ""):
+                # Detect internship or full-time
+                raw_type = str(row.get("job_type", "") or "").lower()
+                if re.search(r'\b(intern|internship|trainee|apprentice)\b', title, re.IGNORECASE) or 'intern' in raw_type:
+                    job_type = "Internship"
+                elif raw_type and raw_type not in ("nan", "none", ""):
+                    job_type = raw_type.capitalize()
+                else:
                     job_type = "Full-time"
 
                 description = str(row.get("description", "") or "").strip()

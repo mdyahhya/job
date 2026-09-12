@@ -662,6 +662,73 @@ body {
   stroke: #FFFFFF;
 }
 
+/* Secondary Filter Bar (Platform & Job Type) */
+.secondary-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.sub-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sub-filter-group::-webkit-scrollbar {
+  display: none;
+}
+
+.sub-filter-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-light);
+  letter-spacing: 0.4px;
+  margin-right: 2px;
+}
+
+.sub-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1.2px solid var(--border-color);
+  background-color: var(--bg-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.sub-pill:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background-color: #FFFFFF;
+}
+
+.sub-pill.active {
+  background-color: var(--accent-blue);
+  color: #FFFFFF !important;
+  border-color: var(--accent-blue);
+  box-shadow: 0 2px 6px rgba(10, 42, 94, 0.18);
+}
+
+.sub-pill.active .svg-icon {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
 /* Feed Status Banner */
 .feed-summary-bar {
   display: flex;
