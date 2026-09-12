@@ -2074,42 +2074,54 @@ const App = (() => {
       }
 
       try {
-        const response = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'login', pass })
-        });
+        let isSuccess = false;
+        let token = null;
+        let warning = null;
 
-        const data = await response.json().catch(() => ({}));
+        try {
+          const response = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', pass })
+          });
 
-        if (response.ok && data.success) {
-          // Save password and active session state in localStorage as requested
+          if (response.ok) {
+            const data = await response.json().catch(() => ({}));
+            if (data.success) {
+              isSuccess = true;
+              token = data.token;
+              warning = data.warning;
+            }
+          } else if (response.status === 404 || response.status === 501 || response.status === 405) {
+            // Local development or static host where serverless /api/auth is not hosted
+            if (pass === 'dominal123' || pass === 'admin') {
+              isSuccess = true;
+              warning = 'Unlocked in local/static mode';
+            }
+          }
+        } catch (fetchErr) {
+          // Network failure or static server
+          if (pass === 'dominal123' || pass === 'admin') {
+            isSuccess = true;
+            warning = 'Unlocked in offline mode';
+          }
+        }
+
+        if (isSuccess) {
           localStorage.setItem(this.passKey, pass);
           localStorage.setItem(this.sessionKey, 'active');
-          if (data.token) {
-            localStorage.setItem('dominal_auth_token', data.token);
+          if (token) {
+            localStorage.setItem('dominal_auth_token', token);
           }
           this.hideLockScreen();
           input.value = '';
-          if (data.warning) {
-            showToast(data.warning);
+          if (warning) {
+            showToast(warning);
           } else {
             showToast('Dashboard unlocked successfully');
           }
         } else {
-          const errText = data.error || 'Incorrect password. Access denied.';
-          this.showError(errText);
-        }
-      } catch (netErr) {
-        // Local testing fallback if /api/auth is not reachable (e.g. static server)
-        if (pass === 'dominal123' || pass === 'admin') {
-          localStorage.setItem(this.passKey, pass);
-          localStorage.setItem(this.sessionKey, 'active');
-          this.hideLockScreen();
-          input.value = '';
-          showToast('Unlocked in local mode (fallback: dominal123)');
-        } else {
-          this.showError('Incorrect password. For local testing without Vercel API, enter: dominal123');
+          this.showError('Incorrect password. Access denied.');
         }
       } finally {
         if (btnSubmit) {
@@ -2516,7 +2528,6 @@ const App = (() => {
     filterByCategoryRule,
     filterByPrimaryCategory,
     selectDomain,
-    loadSearchHistoryBatch,
     deleteSearchHistoryItem,
     resetFilters,
     renderScrapedJobs,
@@ -2531,5 +2542,16 @@ const App = (() => {
   };
 })();
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', App.init);
+// Attach to global window object
+if (typeof window !== 'undefined') {
+  window.App = App;
+}
+
+// Initialize on DOM ready or immediately if already loaded
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', App.init);
+  } else {
+    App.init();
+  }
+}
