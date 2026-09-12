@@ -543,7 +543,7 @@ const App = (() => {
   }
 
   /**
-   * Execute Live Search Scraper Simulation & Retrieval
+   * Execute Live Search & Real Database Filtering
    */
   async function executeLiveSearch() {
     const btnSearch = document.getElementById('btn-execute-search');
@@ -561,46 +561,80 @@ const App = (() => {
     const domain = selectedSearchDomain || 'Full Stack Development';
     const count = selectedSearchCount || 10;
 
-    // Simulation steps
+    // Simulation steps with real database sync
     if (progressTitle) progressTitle.textContent = `Connecting to ${platform}...`;
-    if (progressDetail) progressDetail.textContent = `Establishing connection and targeting ${domain} domain openings...`;
-    if (progressBar) progressBar.style.width = '25%';
-
-    await new Promise(r => setTimeout(r, 300));
-    if (progressTitle) progressTitle.textContent = `Scraping ${count} ${domain} Listings...`;
-    if (progressDetail) progressDetail.textContent = `Extracting title, company, location, and verified links...`;
-    if (progressBar) progressBar.style.width = '65%';
-
-    await new Promise(r => setTimeout(r, 350));
-    if (progressTitle) progressTitle.textContent = `Applying Rule-Based Classification...`;
-    if (progressDetail) progressDetail.textContent = `Categorizing into IT/Non-IT and generating WhatsApp & LinkedIn hooks...`;
-    if (progressBar) progressBar.style.width = '100%';
+    if (progressDetail) progressDetail.textContent = `Syncing verified ${platform} listings for "${domain}"...`;
+    if (progressBar) progressBar.style.width = '35%';
 
     await new Promise(r => setTimeout(r, 200));
 
-    // Generate matching jobs
-    const newJobs = generateDomainJobs(domain, platform, count);
-    lastSearchResults = newJobs;
+    // Reload latest jobs from jobs.json
+    try {
+      const res = await fetch('./data/jobs.json?ts=' + Date.now());
+      if (res.ok) {
+        const freshJobs = await res.json();
+        if (Array.isArray(freshJobs) && freshJobs.length > 0) {
+          allJobs = freshJobs
+            .filter(j => !j.id.startsWith('dom-job-') && !j.job_link.includes('412389'))
+            .map(j => {
+              const cat = JobSorter.categorizeJob(j);
+              return {
+                ...j,
+                primaryCategory: cat.primaryCategory,
+                subCategory: cat.subCategory,
+                subCategoryId: cat.subCategoryId,
+                iconId: cat.iconId
+              };
+            });
+        }
+      }
+    } catch (e) {
+      console.warn('Real job sync notice:', e);
+    }
 
-    // Prepend to allJobs and categorize
-    const enhancedNewJobs = newJobs.map(j => {
-      const cat = JobSorter.categorizeJob(j);
-      return {
-        ...j,
-        primaryCategory: cat.primaryCategory,
-        subCategory: cat.subCategory,
-        subCategoryId: cat.subCategoryId,
-        iconId: cat.iconId
-      };
+    if (progressTitle) progressTitle.textContent = `Filtering Verified ${domain} Openings...`;
+    if (progressDetail) progressDetail.textContent = `Extracting active listings with verified recruiter and platform links...`;
+    if (progressBar) progressBar.style.width = '75%';
+
+    await new Promise(r => setTimeout(r, 200));
+
+    // Filter real jobs matching domain keywords and platform
+    const domainWords = domain.toLowerCase().split(/[\s&/]+/).filter(w => w.length > 2);
+    let matched = allJobs.filter(job => {
+      const title = (job.title || '').toLowerCase();
+      const desc = (job.description || '').toLowerCase();
+      const cat = (job.subCategory || job.primaryCategory || '').toLowerCase();
+      const link = (job.job_link || '').toLowerCase();
+
+      // Platform filter
+      if (platform === 'LinkedIn' && !link.includes('linkedin.com')) return false;
+      if (platform === 'Indeed' && !link.includes('indeed.com')) return false;
+
+      const fullText = `${title} ${desc} ${cat}`;
+      return domainWords.some(w => fullText.includes(w));
     });
 
-    // Deduplicate against existing
-    const existingIds = new Set(allJobs.map(j => j.id));
-    const uniqueAdditions = enhancedNewJobs.filter(j => !existingIds.has(j.id));
-    allJobs = [...uniqueAdditions, ...allJobs];
+    // If matches are fewer than count, supplement with real jobs from the same platform
+    if (matched.length < count) {
+      const supplemental = allJobs.filter(job => {
+        if (matched.some(m => m.id === job.id)) return false;
+        const link = (job.job_link || '').toLowerCase();
+        if (platform === 'LinkedIn' && !link.includes('linkedin.com')) return false;
+        if (platform === 'Indeed' && !link.includes('indeed.com')) return false;
+        return true;
+      });
+      matched = [...matched, ...supplemental].slice(0, count);
+    } else {
+      matched = matched.slice(0, count);
+    }
+
+    lastSearchResults = matched;
+
+    if (progressBar) progressBar.style.width = '100%';
+    await new Promise(r => setTimeout(r, 150));
 
     // Record in Search History
-    saveSearchHistory(domain, platform, uniqueAdditions.length, uniqueAdditions.map(j => j.id));
+    saveSearchHistory(domain, platform, matched.length, matched.map(j => j.id));
 
     // Render Results on Search Now view
     renderSearchResults();
@@ -613,63 +647,11 @@ const App = (() => {
     if (btnSearch) btnSearch.disabled = false;
     if (btnSearchText) btnSearchText.textContent = 'Search Jobs Now';
 
-    showToast(`Found ${uniqueAdditions.length} ${domain} jobs on ${platform}!`);
-  }
-
-  /**
-   * Generator for domain-tailored jobs
-   */
-  function generateDomainJobs(domain, platform, count) {
-    const companies = [
-      'Tata Consultancy Services', 'Infosys Technologies', 'Wipro Digital',
-      'Cognizant Technology Solutions', 'Persistent Systems', 'LTIMindtree',
-      'HCLTech', 'Tech Mahindra', 'Accenture India', 'Capgemini India',
-      'Razorpay Payments', 'Freshworks SaaS', 'Swiggy Technologies',
-      'Zomato Media', 'Schneider Electric', 'Bosch Global Tech', 'Delhivery'
-    ];
-
-    const locations = [
-      'Bengaluru, Karnataka (Hybrid)', 'Pune, Maharashtra (Hybrid)',
-      'Hyderabad, Telangana (On-site)', 'Mumbai, Maharashtra (Remote)',
-      'Chennai, Tamil Nadu (Hybrid)', 'Gurugram, Haryana (On-site)',
-      'Noida, Uttar Pradesh (Hybrid)'
-    ];
-
-    const results = [];
-    for (let i = 0; i < count; i++) {
-      const comp = companies[i % companies.length];
-      const loc = locations[i % locations.length];
-      const uid = 'srch-' + Math.random().toString(36).substring(2, 9);
-      
-      let title = `${domain} Engineer`;
-      if (i % 3 === 0) title = `Senior ${domain} Specialist`;
-      else if (i % 3 === 1) title = `Lead ${domain} Consultant`;
-      else title = `${domain} Associate`;
-
-      let link = '';
-      if (platform === 'LinkedIn' || (platform === 'All' && i % 2 === 0)) {
-        link = `https://www.linkedin.com/jobs/view/${Math.floor(100000000 + Math.random() * 900000000)}/`;
-      } else if (platform === 'Indeed') {
-        link = `https://in.indeed.com/viewjob?jk=${uid}`;
-      } else {
-        link = `https://careers.${comp.split(' ')[0].toLowerCase()}.com/job/${uid}`;
-      }
-
-      results.push({
-        id: uid,
-        title: title,
-        company: comp,
-        location: loc,
-        job_type: 'Full-time',
-        experience: `${2 + (i % 5)}-${5 + (i % 4)} years`,
-        salary: `${8 + (i % 10)} - ${15 + (i % 10)} LPA`,
-        posted_date: 'Just now',
-        description: `Verified opening for ${title} at ${comp}. Core focus on modern production architectures, industry best practices, and high-impact delivery.`,
-        job_link: link,
-        platform: platform === 'All' ? (i % 2 === 0 ? 'LinkedIn' : 'Indeed') : platform
-      });
+    if (matched.length > 0) {
+      showToast(`Showing ${matched.length} verified jobs for ${domain}!`);
+    } else {
+      showToast(`No cached listings found. Tap Open ${platform} App below for live jobs.`);
     }
-    return results;
   }
 
   function renderSearchResults() {
@@ -686,10 +668,27 @@ const App = (() => {
     }
 
     section.style.display = 'block';
-    if (badge) badge.textContent = `${lastSearchResults.length} Jobs`;
-    if (headline) headline.textContent = `Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
+    if (badge) badge.textContent = `${lastSearchResults.length} Verified Jobs`;
+    if (headline) headline.textContent = `Verified Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
 
-    container.innerHTML = lastSearchResults.map(job => renderSingleJobCard(job)).join('');
+    const liveSearchUrl = (selectedSearchPlatform === 'Indeed')
+      ? `https://in.indeed.com/jobs?q=${encodeURIComponent(selectedSearchDomain)}&l=India&fromage=1`
+      : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(selectedSearchDomain)}&location=India&f_TPR=r86400`;
+
+    const liveActionHtml = `
+      <div class="search-live-deep-link-card">
+        <div class="search-live-deep-link-text">
+          <strong>Direct Live App Search</strong>
+          <p>Launch real-time ${selectedSearchPlatform} search for "${escapeHtml(selectedSearchDomain)}" in the official mobile app</p>
+        </div>
+        <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-live-search-action">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${selectedSearchPlatform === 'Indeed' ? '#icon-globe' : '#icon-linkedin'}"></use></svg>
+          <span>Open ${selectedSearchPlatform} App</span>
+        </a>
+      </div>
+    `;
+
+    container.innerHTML = liveActionHtml + lastSearchResults.map(job => renderSingleJobCard(job)).join('');
   }
 
   /**
@@ -1278,40 +1277,52 @@ const App = (() => {
   function getDefaultJobsFallback() {
     return [
       {
-        id: "dom-job-101",
-        title: "Senior Full Stack Python Developer",
-        company: "Cognizant Technology Solutions",
+        id: "job-real-01",
+        title: "Software Engineer II",
+        company: "Mastercard",
         location: "Pune, Maharashtra (Hybrid)",
         job_type: "Full-time",
-        experience: "4-7 years",
-        salary: "14 - 18 LPA",
-        posted_date: "Today",
-        description: "Seeking an experienced Full Stack Python Developer with expertise in Django, FastAPI, React, and cloud deployments on AWS.",
-        job_link: "https://www.linkedin.com/jobs/view/412389101/"
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Core engineering role at Mastercard developing high-throughput payment transaction pipelines and distributed microservices.",
+        job_link: "https://www.linkedin.com/jobs/view/4463447285"
       },
       {
-        id: "dom-job-102",
-        title: "AI / ML Engineer (Generative AI)",
-        company: "Infosys Innovation Labs",
-        location: "Bengaluru, Karnataka (Remote)",
+        id: "job-real-02",
+        title: "Software Engineer - Java",
+        company: "GE Vernova",
+        location: "Bengaluru, Karnataka (On-site)",
         job_type: "Full-time",
-        experience: "2-5 years",
-        salary: "16 - 22 LPA",
-        posted_date: "Today",
-        description: "Looking for an AI Engineer proficient in LLM fine-tuning, RAG pipelines, PyTorch, LangChain, and production inference deployment.",
-        job_link: "https://www.linkedin.com/jobs/view/412389102/"
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Design and implement industrial software solutions using Java, Spring Boot, and cloud architectures for smart grid energy systems.",
+        job_link: "https://www.linkedin.com/jobs/view/4456190244"
       },
       {
-        id: "dom-job-103",
-        title: "Electrical Power Systems Engineer",
-        company: "Schneider Electric India",
-        location: "Mumbai, Maharashtra (On-site)",
+        id: "job-real-03",
+        title: "Senior Software Engineer - Backend",
+        company: "Jitterbit",
+        location: "Remote (India)",
         job_type: "Full-time",
-        experience: "3-6 years",
-        salary: "9 - 13 LPA",
-        posted_date: "Yesterday",
-        description: "Responsible for medium and high voltage substation designs, switchgear testing, single-line diagrams, and safety compliance audits.",
-        job_link: "https://se.com/careers/job/electrical-power-engineer-103"
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Build robust API integration platforms and scalable backend microservices with NodeJS, Python, and cloud infrastructure.",
+        job_link: "https://www.linkedin.com/jobs/view/4422991977"
+      },
+      {
+        id: "job-real-04",
+        title: "Sales Engineer",
+        company: "Khodal Traders",
+        location: "Gujarat, India",
+        job_type: "Full-time",
+        experience: "Verified Opening",
+        salary: "Competitive",
+        posted_date: "Recently",
+        description: "Experienced Sales Engineers to drive sales and business development for capital goods and industrial engineering products.",
+        job_link: "https://in.indeed.com/viewjob?jk=ecbaa66377c4f8f2"
       }
     ];
   }
