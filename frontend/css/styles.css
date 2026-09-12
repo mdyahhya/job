@@ -28,7 +28,7 @@
   --shadow-card: 0 4px 16px rgba(10, 42, 94, 0.08);
   --shadow-drawer: 8px 0 24px rgba(10, 42, 94, 0.15);
   --header-height: 64px;
-  --taskbar-height: 68px;
+  --taskbar-height: 70px;
   --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -87,8 +87,8 @@ body {
 }
 
 .svg-icon-lg {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
 }
 
 /* ==========================================================================
@@ -107,7 +107,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 14px;
   z-index: 100;
   box-shadow: 0 2px 10px rgba(10, 42, 94, 0.2);
 }
@@ -115,15 +115,15 @@ body {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .btn-icon-header {
   background: transparent;
   border: none;
   color: #FFFFFF;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -139,14 +139,14 @@ body {
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
   color: #FFFFFF;
 }
 
 .header-logo-mark {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   overflow: hidden;
   background-color: #FFFFFF;
@@ -157,19 +157,19 @@ body {
 }
 
 .header-title-group h1 {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 700;
   letter-spacing: -0.2px;
   line-height: 1.2;
 }
 
 .header-title-group span {
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.82);
   display: block;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .header-right {
@@ -178,8 +178,29 @@ body {
   gap: 6px;
 }
 
+.btn-header-search-now {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-header-search-now:hover, .btn-header-search-now:active {
+  background-color: #FFFFFF;
+  color: var(--accent-blue);
+}
+
 /* ==========================================================================
-   Bottom Taskbar (Fixed Bottom)
+   Bottom Taskbar (Fixed Bottom - 5 Items)
    ========================================================================== */
 .bottom-taskbar {
   position: fixed;
@@ -194,7 +215,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 8px;
+  padding: 0 4px;
   z-index: 100;
   box-shadow: 0 -4px 16px rgba(10, 42, 94, 0.08);
 }
@@ -205,7 +226,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   height: 100%;
   background: transparent;
   border: none;
@@ -213,32 +234,33 @@ body {
   cursor: pointer;
   position: relative;
   transition: color 0.15s ease;
-  padding: 8px 4px;
+  padding: 6px 2px;
 }
 
 .taskbar-item .svg-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   transition: transform 0.15s ease, stroke 0.15s ease;
 }
 
 .taskbar-label {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   letter-spacing: -0.1px;
+  white-space: nowrap;
 }
 
 .taskbar-badge {
   position: absolute;
-  top: 6px;
-  right: 25%;
+  top: 4px;
+  right: 18%;
   background-color: var(--accent-blue);
   color: #FFFFFF;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: var(--radius-full);
-  min-width: 18px;
+  min-width: 16px;
   text-align: center;
 }
 
@@ -253,14 +275,14 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 36px;
+  width: 28px;
   height: 3px;
   background-color: var(--accent-blue);
   border-radius: 0 0 4px 4px;
 }
 
 .taskbar-item.active .svg-icon {
-  transform: translateY(-2px);
+  transform: translateY(-1.5px);
   stroke: var(--accent-blue);
   stroke-width: 2.3;
 }
@@ -469,6 +491,68 @@ body {
   font-size: 0.88rem;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+.section-header-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ==========================================================================
+   Quick Search Banner (Home Feed)
+   ========================================================================== */
+.quick-search-banner {
+  background: linear-gradient(135deg, var(--accent-blue-light) 0%, #FFFFFF 100%);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.quick-search-banner:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.quick-search-banner .banner-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent-blue);
+}
+
+.quick-search-banner .banner-text strong {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--accent-blue);
+}
+
+.quick-search-banner .banner-text span {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.btn-banner-action {
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 /* ==========================================================================
@@ -748,62 +832,90 @@ body {
   color: var(--text-muted);
 }
 
-/* Job Actions Row */
+/* ==========================================================================
+   Job Actions Row (Balanced Dual-Action Buttons: WhatsApp & LinkedIn/Website)
+   ========================================================================== */
 .job-actions-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--border-light);
 }
 
+/* Primary WhatsApp Action Button */
 .btn-share-whatsapp {
   flex: 1;
   background-color: var(--accent-blue);
   color: #FFFFFF;
-  border: none;
-  height: 44px;
+  border: 1.5px solid var(--accent-blue);
+  height: 42px;
   border-radius: var(--radius-md);
-  font-size: 0.92rem;
+  font-size: 0.86rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 8px rgba(10, 42, 94, 0.2);
+  box-shadow: 0 2px 8px rgba(10, 42, 94, 0.18);
+  text-decoration: none;
 }
 
 .btn-share-whatsapp:hover {
   background-color: var(--accent-blue-hover);
-  box-shadow: 0 4px 12px rgba(10, 42, 94, 0.3);
+  border-color: var(--accent-blue-hover);
+  box-shadow: 0 4px 12px rgba(10, 42, 94, 0.28);
 }
 
 .btn-share-whatsapp:active {
   transform: scale(0.98);
 }
 
-.btn-view-link {
-  height: 44px;
-  width: 44px;
+.btn-share-whatsapp .svg-icon {
+  width: 17px;
+  height: 17px;
+  stroke: #FFFFFF;
+  color: #FFFFFF;
+}
+
+/* Matching LinkedIn / Website Action Button */
+.btn-action-platform {
+  flex: 1;
+  background-color: #FFFFFF;
+  color: var(--accent-blue);
+  border: 1.5px solid var(--accent-blue);
+  height: 42px;
+  border-radius: var(--radius-md);
+  font-size: 0.86rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--accent-blue);
-  background-color: #FFFFFF;
-  text-decoration: none;
+  gap: 7px;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(10, 42, 94, 0.06);
+  text-decoration: none;
 }
 
-.btn-view-link:hover {
-  border-color: var(--accent-blue);
+.btn-action-platform:hover {
   background-color: var(--accent-blue-light);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.btn-action-platform:active {
+  transform: scale(0.98);
+}
+
+.btn-action-platform .svg-icon {
+  width: 17px;
+  height: 17px;
+  stroke: var(--accent-blue);
+  color: var(--accent-blue);
 }
 
 /* Shared State Styling */
@@ -835,7 +947,339 @@ body {
   background-color: var(--shared-tag-bg);
   color: var(--shared-tag-text);
   box-shadow: none;
+  border-color: var(--border-color);
+}
+
+.job-card.is-shared .btn-share-whatsapp .svg-icon {
+  stroke: var(--shared-tag-text);
+  color: var(--shared-tag-text);
+}
+
+/* ==========================================================================
+   VIEW: SEARCH NOW (LIVE TARGETED SCRAPER)
+   ========================================================================== */
+.search-now-card {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-card);
+}
+
+.search-now-step {
+  margin-bottom: 20px;
+}
+
+.step-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.94rem;
+  font-weight: 800;
+  color: var(--accent-blue);
+  margin-bottom: 10px;
+}
+
+.step-number {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+/* Domain Chips Selector */
+.domain-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.domain-chip {
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1.5px solid var(--border-color);
+  background-color: #FFFFFF;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.domain-chip:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.domain-chip.active {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(10, 42, 94, 0.25);
+}
+
+.domain-chip.active .svg-icon {
+  stroke: #FFFFFF;
+}
+
+/* Add Custom Domain Row */
+.custom-domain-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.custom-domain-input {
+  flex: 1;
+  height: 40px;
+  font-size: 0.88rem;
+}
+
+.btn-add-domain {
+  height: 40px;
+  white-space: nowrap;
+}
+
+/* Platform Select Grid */
+.platform-select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.platform-option {
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 10px;
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: block;
+}
+
+.platform-option input[type="radio"] {
+  display: none;
+}
+
+.platform-card-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.platform-card-content .svg-icon {
+  color: var(--accent-blue);
+  width: 20px;
+  height: 20px;
+}
+
+.platform-card-content strong {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--text-main);
+}
+
+.platform-card-content span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+.platform-option.active {
+  border-color: var(--accent-blue);
+  background-color: var(--accent-blue-light);
+}
+
+.platform-option.active strong {
+  color: var(--accent-blue);
+}
+
+/* Target Count Selector */
+.count-pill-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.count-pill {
+  flex: 1;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.count-pill:hover {
+  border-color: var(--accent-blue);
+}
+
+.count-pill.active {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(10, 42, 94, 0.2);
+}
+
+/* Big Search Button */
+.btn-execute-search {
+  width: 100%;
+  height: 48px;
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px rgba(10, 42, 94, 0.28);
+  margin-top: 10px;
+}
+
+.btn-execute-search:hover {
+  background-color: var(--accent-blue-hover);
+}
+
+.btn-execute-search:active {
+  transform: scale(0.99);
+}
+
+/* Live Search Progress Card */
+.search-progress-card {
+  background-color: var(--accent-blue-light);
+  border: 1.5px solid var(--accent-blue);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.progress-radar-spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 10px;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-anim {
+  animation: pulseScale 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseScale {
+  0% { transform: scale(0.92); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.7; }
+}
+
+.search-progress-card h4 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--accent-blue);
+  margin-bottom: 4px;
+}
+
+.search-progress-card p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(10, 42, 94, 0.15);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--accent-blue);
+  transition: width 0.3s ease;
+}
+
+/* Results Badge */
+.results-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--accent-blue);
+  color: #FFFFFF;
+}
+
+.search-results-section {
+  margin-bottom: 28px;
+}
+
+/* Search History Section */
+.search-history-section {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.search-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.search-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+}
+
+.history-item-info strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.history-item-actions {
+  display: flex;
+  gap: 6px;
 }
 
 /* ==========================================================================

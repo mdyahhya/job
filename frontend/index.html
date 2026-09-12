@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dominal Technology Jobs - Job Scraper & WhatsApp Dashboard</title>
-  <meta name="description" content="Dominal Technology Jobs progressive web app for automated job scraping, domain categorization, and streamlined WhatsApp sharing.">
+  <meta name="description" content="Dominal Technology Jobs progressive web app for automated job scraping, domain categorization, live multi-platform search, and streamlined WhatsApp sharing.">
   <meta name="theme-color" content="#0A2A5E">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,6 +40,13 @@
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
       <polyline points="9 22 9 12 15 12 15 22"></polyline>
     </symbol>
+    <!-- Radar / Search Now -->
+    <symbol id="icon-radar" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 6a6 6 0 1 0 6 6"></path>
+      <circle cx="12" cy="12" r="2"></circle>
+      <line x1="12" y1="12" x2="18.5" y2="5.5"></line>
+    </symbol>
     <!-- Categories Grid / List -->
     <symbol id="icon-grid" viewBox="0 0 24 24">
       <rect x="3" y="3" width="7" height="7"></rect>
@@ -57,11 +64,38 @@
       <circle cx="12" cy="12" r="3"></circle>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
     </symbol>
-    <!-- Share to WhatsApp -->
+    <!-- Share Icon -->
     <symbol id="icon-share" viewBox="0 0 24 24">
       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
       <polyline points="16 6 12 2 8 6"></polyline>
       <line x1="12" y1="2" x2="12" y2="15"></line>
+    </symbol>
+    <!-- Official WhatsApp SVG Icon (Clean Vector, Matching Design) -->
+    <symbol id="icon-whatsapp" viewBox="0 0 24 24">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+    </symbol>
+    <!-- Official LinkedIn SVG Icon (Clean Vector, Matching Design) -->
+    <symbol id="icon-linkedin" viewBox="0 0 24 24">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+      <rect x="2" y="9" width="4" height="12"></rect>
+      <circle cx="4" cy="4" r="2"></circle>
+    </symbol>
+    <!-- Globe / Website Icon for Non-LinkedIn Jobs -->
+    <symbol id="icon-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="2" y1="12" x2="22" y2="12"></line>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </symbol>
+    <!-- Plus Icon (Add Custom Domain) -->
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </symbol>
+    <!-- History Icon -->
+    <symbol id="icon-history" viewBox="0 0 24 24">
+      <path d="M3 3v5h5"></path>
+      <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+      <path d="M12 7v5l4 2"></path>
     </symbol>
     <!-- Checkmark Circle -->
     <symbol id="icon-check-circle" viewBox="0 0 24 24">
@@ -199,6 +233,10 @@
       </a>
     </div>
     <div class="header-right">
+      <button class="btn-header-search-now" data-view="search-now" title="Search Now Live Scraper" aria-label="Search Now">
+        <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+        <span>Search Now</span>
+      </button>
       <button class="btn-icon-header btn-refresh-data" title="Refresh Listings" aria-label="Refresh Listings">
         <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
       </button>
@@ -229,6 +267,11 @@
       <button class="drawer-link active" data-view="home">
         <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-home"></use></svg>
         <span>Home / Feed</span>
+      </button>
+
+      <button class="drawer-link" data-view="search-now">
+        <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+        <span>Search Now (Live Scraper)</span>
       </button>
 
       <button class="drawer-link" data-view="categories">
@@ -266,7 +309,7 @@
     </nav>
 
     <div class="drawer-footer">
-      <span>Version 1.0.0 (PWA)</span>
+      <span>Version 1.1.0 (PWA)</span>
       <span>Dominal Tech</span>
     </div>
   </aside>
@@ -278,6 +321,20 @@
 
     <!-- VIEW 1: HOME / FEED -->
     <section class="view-section active-view" id="view-home">
+      <!-- Search Now Quick Banner -->
+      <div class="quick-search-banner" data-view="search-now">
+        <div class="banner-text">
+          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+          <div>
+            <strong>Need fresh specific jobs?</strong>
+            <span>Search live LinkedIn & web openings by domain</span>
+          </div>
+        </div>
+        <button class="btn-banner-action" data-view="search-now">
+          <span>Search Now</span>
+        </button>
+      </div>
+
       <div class="search-filter-box">
         <div class="search-input-wrapper">
           <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-search"></use></svg>
@@ -323,7 +380,150 @@
       </div>
     </section>
 
-    <!-- VIEW 2: CATEGORIES & DOMAINS -->
+    <!-- VIEW 2: SEARCH NOW (LIVE TARGETED SCRAPER & DISCOVERY) -->
+    <section class="view-section" id="view-search-now">
+      <div class="section-header">
+        <h2>Search Now</h2>
+        <p>Targeted multi-platform live job discovery with domain customization.</p>
+      </div>
+
+      <!-- Search Configuration Card -->
+      <div class="search-now-card">
+        <!-- 1. Select / Add Domain -->
+        <div class="search-now-step">
+          <label class="step-label">
+            <span class="step-number">1</span>
+            <span>Select or Add Target Domain</span>
+          </label>
+          
+          <!-- Domain Chips Selector -->
+          <div class="domain-chips-wrapper" id="domain-chips-container">
+            <!-- Populated dynamically by app.js -->
+          </div>
+
+          <!-- Add Custom Domain Row -->
+          <div class="custom-domain-box">
+            <input type="text" id="input-custom-domain" class="form-input custom-domain-input" placeholder="Type custom domain (e.g. Cloud Architect, Cybersecurity)...">
+            <button class="btn-secondary btn-add-domain" id="btn-add-custom-domain" type="button">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-plus"></use></svg>
+              <span>Add Domain</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Target Platform Selection -->
+        <div class="search-now-step">
+          <label class="step-label">
+            <span class="step-number">2</span>
+            <span>Target Platform</span>
+          </label>
+          <div class="platform-select-grid">
+            <label class="platform-option active">
+              <input type="radio" name="search-platform" value="LinkedIn" checked>
+              <div class="platform-card-content">
+                <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+                <div>
+                  <strong>LinkedIn (Default)</strong>
+                  <span>Direct in-app openings</span>
+                </div>
+              </div>
+            </label>
+            <label class="platform-option">
+              <input type="radio" name="search-platform" value="Indeed">
+              <div class="platform-card-content">
+                <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-globe"></use></svg>
+                <div>
+                  <strong>Indeed</strong>
+                  <span>Aggregated listings</span>
+                </div>
+              </div>
+            </label>
+            <label class="platform-option">
+              <input type="radio" name="search-platform" value="Glassdoor">
+              <div class="platform-card-content">
+                <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-building"></use></svg>
+                <div>
+                  <strong>Glassdoor</strong>
+                  <span>Company listings</span>
+                </div>
+              </div>
+            </label>
+            <label class="platform-option">
+              <input type="radio" name="search-platform" value="All">
+              <div class="platform-card-content">
+                <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-grid"></use></svg>
+                <div>
+                  <strong>All Platforms</strong>
+                  <span>Combined search</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Target Job Count -->
+        <div class="search-now-step">
+          <label class="step-label">
+            <span class="step-number">3</span>
+            <span>Quantity Target</span>
+          </label>
+          <div class="count-pill-selector">
+            <button type="button" class="count-pill active" data-count="10">10 Jobs</button>
+            <button type="button" class="count-pill" data-count="20">20 Jobs</button>
+            <button type="button" class="count-pill" data-count="30">30 Jobs</button>
+            <button type="button" class="count-pill" data-count="50">50 Jobs</button>
+          </div>
+        </div>
+
+        <!-- Execute Search Button -->
+        <button class="btn-execute-search" id="btn-execute-search" type="button">
+          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+          <span id="btn-search-text">Search Jobs Now</span>
+        </button>
+      </div>
+
+      <!-- Live Search Progress Indicator (Hidden by default) -->
+      <div class="search-progress-card" id="search-progress-card" style="display: none;">
+        <div class="progress-radar-spinner">
+          <svg class="svg-icon svg-icon-lg pulse-anim" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+        </div>
+        <h4 id="progress-status-title">Querying Platform...</h4>
+        <p id="progress-status-detail">Connecting to platform and scraping matching domain listings...</p>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Search Results Container -->
+      <div class="search-results-section" id="search-results-section" style="display: none;">
+        <div class="section-header-compact">
+          <h3 id="search-results-headline">Search Results</h3>
+          <span class="results-badge" id="search-results-count-badge">0 Found</span>
+        </div>
+        <div class="job-feed-list" id="search-results-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Search History Section -->
+      <div class="search-history-section">
+        <div class="section-header-compact">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-history"></use></svg>
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--accent-blue);">Search History</h3>
+          </div>
+          <button class="btn-sm-action" id="btn-clear-search-history" type="button">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
+            <span>Clear History</span>
+          </button>
+        </div>
+        <div id="search-history-list" class="search-history-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: CATEGORIES & DOMAINS -->
     <section class="view-section" id="view-categories">
       <div class="section-header">
         <h2>Job Categories</h2>
@@ -374,7 +574,7 @@
       </div>
     </section>
 
-    <!-- VIEW 3: ACTIVITY / SENT LOG -->
+    <!-- VIEW 4: ACTIVITY / SENT LOG -->
     <section class="view-section" id="view-activity">
       <div class="activity-header-actions">
         <div class="section-header" style="margin-bottom: 0;">
@@ -392,7 +592,7 @@
       </div>
     </section>
 
-    <!-- VIEW 4: SETTINGS & INSTALLATION -->
+    <!-- VIEW 5: SETTINGS & INSTALLATION -->
     <section class="view-section" id="view-settings">
       <div class="section-header">
         <h2>Settings & Setup</h2>
@@ -421,7 +621,7 @@
           <span>WhatsApp Share Destination</span>
         </div>
         <p class="settings-group-desc">
-          Clicking "Share to WhatsApp" pre-fills this number with your customized template. You then manually forward the message to the Dominal Technology Jobs group.
+          Clicking "WhatsApp" pre-fills this number with your customized template. You then manually forward the message to the Dominal Technology Jobs group.
         </p>
 
         <div class="form-field">
@@ -454,7 +654,7 @@
         <!-- Real-time Live Preview -->
         <div class="live-preview-box">
           <div class="live-preview-header">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-share"></use></svg>
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
             <span>Live WhatsApp Message Preview</span>
           </div>
           <div class="live-preview-text" id="settings-live-preview"></div>
@@ -476,12 +676,17 @@
   </main>
 
   <!-- ==========================================================================
-       Fixed Bottom Taskbar (4 Core Sections)
+       Fixed Bottom Taskbar (5 Core Sections: Feed, Search Now, Categories, Sent Log, Settings)
        ========================================================================== -->
   <nav class="bottom-taskbar" role="navigation" aria-label="Bottom Taskbar Navigation">
     <button class="taskbar-item active" data-view="home" aria-label="Home Feed">
       <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-home"></use></svg>
       <span class="taskbar-label">Feed</span>
+    </button>
+
+    <button class="taskbar-item" data-view="search-now" aria-label="Search Now">
+      <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+      <span class="taskbar-label">Search Now</span>
     </button>
 
     <button class="taskbar-item" data-view="categories" aria-label="Categories">
@@ -515,13 +720,14 @@
         </button>
       </div>
       <div class="modal-body">
-        <p><strong>Dominal Technology Jobs</strong> is an automated progressive web application built to streamline job discovery, rule-based role classification, and verified WhatsApp distribution.</p>
+        <p><strong>Dominal Technology Jobs</strong> is an automated progressive web application built to streamline job discovery, rule-based role classification, and verified WhatsApp & LinkedIn distribution.</p>
         <br>
         <p><strong>Key Highlights:</strong></p>
         <ul style="padding-left: 20px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
           <li>Automated JobSpy web scraper running every 2 hours.</li>
+          <li>Live <strong>Search Now</strong> scraper targeting LinkedIn, Indeed, Glassdoor.</li>
+          <li>Dual actions: 1-click WhatsApp message & direct LinkedIn App launch.</li>
           <li>Deterministic rule-based sorting into IT, Non-IT, Electrical, and Sales.</li>
-          <li>1-Click WhatsApp pre-filled message generation.</li>
           <li>Network-first caching PWA with seamless background updates.</li>
           <li>Zero emojis policy across UI and templates.</li>
         </ul>

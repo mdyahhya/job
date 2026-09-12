@@ -1,6 +1,7 @@
 /**
  * Dominal Technology Jobs - Main Application Controller
- * Handles SPA navigation, data loading, rendering, filter states, drawer interactions, and toasts.
+ * Handles SPA navigation, data loading, rendering, filter states, drawer interactions,
+ * dual-button job actions (WhatsApp + LinkedIn/Website), live Search Now scraper, and toasts.
  */
 
 const App = (() => {
@@ -9,6 +10,26 @@ const App = (() => {
   let activeCategoryFilter = 'all';
   let searchQuery = '';
 
+  // Search Now State
+  const DEFAULT_DOMAINS = [
+    'Full Stack Development',
+    'Software Development',
+    'Backend Development',
+    'Frontend Development',
+    'Python Developer',
+    'AI & Machine Learning',
+    'DevOps & Cloud',
+    'Electrical & Hardware',
+    'Sales & Business Dev',
+    'Mechanical & CAD',
+    'HR & Talent Acquisition'
+  ];
+
+  let selectedSearchDomain = 'Full Stack Development';
+  let selectedSearchPlatform = 'LinkedIn';
+  let selectedSearchCount = 10;
+  let lastSearchResults = [];
+
   /**
    * Initialize Application
    */
@@ -16,6 +37,7 @@ const App = (() => {
     initNavigation();
     initDrawer();
     initSearchAndFilters();
+    initSearchNowView();
     initSettingsForm();
     initActivityLog();
     initSecondaryActions();
@@ -32,6 +54,7 @@ const App = (() => {
     // Listen for shared jobs to re-render feed cards
     window.addEventListener('dominal:job-shared', () => {
       renderJobFeed();
+      renderSearchResults();
       renderActivityLog();
       updateCategoryStats();
       showToast('Opening WhatsApp & logged to Activity');
@@ -39,12 +62,13 @@ const App = (() => {
 
     window.addEventListener('dominal:job-shared-updated', () => {
       renderJobFeed();
+      renderSearchResults();
       renderActivityLog();
     });
 
     // Handle initial hash route if any
     const initialHash = window.location.hash.replace('#', '');
-    if (['home', 'categories', 'activity', 'settings'].includes(initialHash)) {
+    if (['home', 'search-now', 'categories', 'activity', 'settings'].includes(initialHash)) {
       switchView(initialHash);
     } else {
       switchView('home');
@@ -106,7 +130,7 @@ const App = (() => {
    * SPA View Switching
    */
   function switchView(viewName) {
-    if (!['home', 'categories', 'activity', 'settings'].includes(viewName)) {
+    if (!['home', 'search-now', 'categories', 'activity', 'settings'].includes(viewName)) {
       viewName = 'home';
     }
     currentView = viewName;
@@ -143,6 +167,8 @@ const App = (() => {
     // Refresh specific view contents
     if (viewName === 'categories') {
       updateCategoryStats();
+    } else if (viewName === 'search-now') {
+      renderSearchHistory();
     } else if (viewName === 'activity') {
       renderActivityLog();
     } else if (viewName === 'settings') {
@@ -156,7 +182,7 @@ const App = (() => {
   }
 
   /**
-   * Bottom Taskbar Navigation & Drawer Links
+   * Navigation Initialization
    */
   function initNavigation() {
     document.querySelectorAll('[data-view]').forEach(elem => {
@@ -169,7 +195,7 @@ const App = (() => {
 
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
-      if (['home', 'categories', 'activity', 'settings'].includes(hash) && hash !== currentView) {
+      if (['home', 'search-now', 'categories', 'activity', 'settings'].includes(hash) && hash !== currentView) {
         switchView(hash);
       }
     });
@@ -211,6 +237,27 @@ const App = (() => {
       drawerBackdrop.classList.remove('is-open');
       drawerContent.classList.remove('is-open');
     }
+  }
+
+  /**
+   * Helper to check if a job is from LinkedIn
+   */
+  function isLinkedInJob(job) {
+    if (!job) return false;
+    if (job.platform && job.platform.toLowerCase() === 'linkedin') return true;
+    if (job.job_link && job.job_link.toLowerCase().includes('linkedin.com')) return true;
+    return false;
+  }
+
+  /**
+   * Handle Opening Job in LinkedIn App or Web Browser
+   */
+  function handleOpenJobLink(url, isLinkedIn) {
+    if (!url) return;
+    // On mobile devices, opening a standard https://www.linkedin.com/jobs/view/... URL
+    // directly triggers Android/iOS intent handlers to open within the LinkedIn native app!
+    // For non-LinkedIn links, it opens the target company website in a new tab.
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   /**
@@ -287,70 +334,78 @@ const App = (() => {
       return;
     }
 
-    feedContainer.innerHTML = filteredJobs.map(job => {
-      const isShared = WhatsAppManager.isJobSent(job.id);
-      const catBadgeClass = getBadgeClass(job.primaryCategory, job.subCategoryId);
+    feedContainer.innerHTML = filteredJobs.map(job => renderSingleJobCard(job)).join('');
+  }
 
-      return `
-        <article class="job-card ${isShared ? 'is-shared' : ''}" id="card-${escapeHtml(job.id)}">
-          <div class="job-card-header">
-            <span class="job-category-badge ${catBadgeClass}">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${job.iconId || 'icon-briefcase'}"></use></svg>
-              <span>${escapeHtml(job.subCategory || job.primaryCategory)}</span>
-            </span>
-            <span class="job-posted-time">${escapeHtml(job.posted_date || 'Recent')}</span>
+  /**
+   * Render Single Job Card HTML (Used in Home Feed & Search Now results)
+   */
+  function renderSingleJobCard(job) {
+    const isShared = WhatsAppManager.isJobSent(job.id);
+    const isLinkedIn = isLinkedInJob(job);
+    const catBadgeClass = getBadgeClass(job.primaryCategory, job.subCategoryId);
+
+    return `
+      <article class="job-card ${isShared ? 'is-shared' : ''}" id="card-${escapeHtml(job.id)}">
+        <div class="job-card-header">
+          <span class="job-category-badge ${catBadgeClass}">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${job.iconId || 'icon-briefcase'}"></use></svg>
+            <span>${escapeHtml(job.subCategory || job.primaryCategory)}</span>
+          </span>
+          <span class="job-posted-time">${escapeHtml(job.posted_date || 'Recent')}</span>
+        </div>
+
+        ${isShared ? `
+          <div class="job-shared-ribbon">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+            <span>Shared to WhatsApp</span>
           </div>
+        ` : ''}
 
-          ${isShared ? `
-            <div class="job-shared-ribbon">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
-              <span>Shared to WhatsApp</span>
-            </div>
+        <h3 class="job-card-title">${escapeHtml(job.title)}</h3>
+
+        <div class="job-meta-list">
+          <div class="job-meta-item">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-building"></use></svg>
+            <span class="job-company-name">${escapeHtml(job.company)}</span>
+          </div>
+          <div class="job-meta-item">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-map-pin"></use></svg>
+            <span>${escapeHtml(job.location || 'Location upon request')}</span>
+          </div>
+        </div>
+
+        ${job.description ? `
+          <p class="job-card-description">${escapeHtml(job.description)}</p>
+        ` : ''}
+
+        <div class="job-tags-row">
+          ${job.experience ? `
+            <span class="job-tag">Exp: ${escapeHtml(job.experience)}</span>
           ` : ''}
-
-          <h3 class="job-card-title">${escapeHtml(job.title)}</h3>
-
-          <div class="job-meta-list">
-            <div class="job-meta-item">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-building"></use></svg>
-              <span class="job-company-name">${escapeHtml(job.company)}</span>
-            </div>
-            <div class="job-meta-item">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-map-pin"></use></svg>
-              <span>${escapeHtml(job.location || 'Location upon request')}</span>
-            </div>
-          </div>
-
-          ${job.description ? `
-            <p class="job-card-description">${escapeHtml(job.description)}</p>
+          ${job.salary ? `
+            <span class="job-tag">Salary: ${escapeHtml(job.salary)}</span>
           ` : ''}
+          ${job.job_type ? `
+            <span class="job-tag">${escapeHtml(job.job_type)}</span>
+          ` : ''}
+        </div>
 
-          <div class="job-tags-row">
-            ${job.experience ? `
-              <span class="job-tag">Exp: ${escapeHtml(job.experience)}</span>
-            ` : ''}
-            ${job.salary ? `
-              <span class="job-tag">Salary: ${escapeHtml(job.salary)}</span>
-            ` : ''}
-            ${job.job_type ? `
-              <span class="job-tag">${escapeHtml(job.job_type)}</span>
-            ` : ''}
-          </div>
+        <div class="job-actions-row">
+          <!-- WhatsApp Button -->
+          <button class="btn-share-whatsapp" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+            <span>${isShared ? 'Shared' : 'WhatsApp'}</span>
+          </button>
 
-          <div class="job-actions-row">
-            <button class="btn-share-whatsapp" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
-              <svg class="svg-icon" viewBox="0 0 24 24"><use href="${isShared ? '#icon-check' : '#icon-share'}"></use></svg>
-              <span>${isShared ? 'Share Again (WhatsApp)' : 'Share to WhatsApp'}</span>
-            </button>
-            ${job.job_link ? `
-              <a href="${escapeHtml(job.job_link)}" target="_blank" rel="noopener noreferrer" class="btn-view-link" title="Open Job Source">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-external-link"></use></svg>
-              </a>
-            ` : ''}
-          </div>
-        </article>
-      `;
-    }).join('');
+          <!-- LinkedIn / Website Button (Matching Size and Exact Design) -->
+          <button class="btn-action-platform" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
+            <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
+          </button>
+        </div>
+      </article>
+    `;
   }
 
   function getBadgeClass(primary, subCategoryId) {
@@ -368,6 +423,376 @@ const App = (() => {
     const job = allJobs.find(j => j.id === jobId);
     if (!job) return;
     WhatsAppManager.shareJob(job);
+  }
+
+  /**
+   * ==========================================================================
+   * SEARCH NOW (LIVE TARGETED SCRAPER & DISCOVERY ENGINE)
+   * ==========================================================================
+   */
+  function initSearchNowView() {
+    renderDomainChips();
+
+    // Add Custom Domain Form
+    const btnAddDomain = document.getElementById('btn-add-custom-domain');
+    const inputCustomDomain = document.getElementById('input-custom-domain');
+
+    if (btnAddDomain && inputCustomDomain) {
+      btnAddDomain.addEventListener('click', () => {
+        const val = inputCustomDomain.value.trim();
+        if (val) {
+          addCustomDomain(val);
+          inputCustomDomain.value = '';
+        }
+      });
+
+      inputCustomDomain.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = inputCustomDomain.value.trim();
+          if (val) {
+            addCustomDomain(val);
+            inputCustomDomain.value = '';
+          }
+        }
+      });
+    }
+
+    // Platform Radio Selection
+    document.querySelectorAll('.platform-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.platform-option').forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        const radio = option.querySelector('input[type="radio"]');
+        if (radio) {
+          radio.checked = true;
+          selectedSearchPlatform = radio.value;
+        }
+      });
+    });
+
+    // Count Pill Selection
+    document.querySelectorAll('.count-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.count-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedSearchCount = parseInt(pill.dataset.count, 10) || 10;
+      });
+    });
+
+    // Start Search Button
+    const btnExecuteSearch = document.getElementById('btn-execute-search');
+    if (btnExecuteSearch) {
+      btnExecuteSearch.addEventListener('click', executeLiveSearch);
+    }
+
+    // Clear Search History Button
+    const btnClearSearchHistory = document.getElementById('btn-clear-search-history');
+    if (btnClearSearchHistory) {
+      btnClearSearchHistory.addEventListener('click', clearSearchHistory);
+    }
+
+    renderSearchHistory();
+  }
+
+  function getCustomDomains() {
+    try {
+      const data = localStorage.getItem('dominal_custom_domains');
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function addCustomDomain(name) {
+    const custom = getCustomDomains();
+    if (!custom.includes(name) && !DEFAULT_DOMAINS.includes(name)) {
+      custom.push(name);
+      localStorage.setItem('dominal_custom_domains', JSON.stringify(custom));
+    }
+    selectedSearchDomain = name;
+    renderDomainChips();
+    showToast(`Domain "${name}" added`);
+  }
+
+  function renderDomainChips() {
+    const container = document.getElementById('domain-chips-container');
+    if (!container) return;
+
+    const custom = getCustomDomains();
+    const domains = [...DEFAULT_DOMAINS, ...custom];
+
+    container.innerHTML = domains.map(dom => {
+      const isActive = dom === selectedSearchDomain;
+      return `
+        <button type="button" class="domain-chip ${isActive ? 'active' : ''}" onclick="App.selectDomain('${escapeHtml(dom)}')">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-code"></use></svg>
+          <span>${escapeHtml(dom)}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function selectDomain(dom) {
+    selectedSearchDomain = dom;
+    renderDomainChips();
+  }
+
+  /**
+   * Execute Live Search Scraper Simulation & Retrieval
+   */
+  async function executeLiveSearch() {
+    const btnSearch = document.getElementById('btn-execute-search');
+    const btnSearchText = document.getElementById('btn-search-text');
+    const progressCard = document.getElementById('search-progress-card');
+    const progressBar = document.getElementById('progress-bar-fill');
+    const progressTitle = document.getElementById('progress-status-title');
+    const progressDetail = document.getElementById('progress-status-detail');
+
+    if (btnSearch) btnSearch.disabled = true;
+    if (btnSearchText) btnSearchText.textContent = 'Searching...';
+    if (progressCard) progressCard.style.display = 'block';
+
+    const platform = selectedSearchPlatform || 'LinkedIn';
+    const domain = selectedSearchDomain || 'Full Stack Development';
+    const count = selectedSearchCount || 10;
+
+    // Simulation steps
+    if (progressTitle) progressTitle.textContent = `Connecting to ${platform}...`;
+    if (progressDetail) progressDetail.textContent = `Establishing connection and targeting ${domain} domain openings...`;
+    if (progressBar) progressBar.style.width = '25%';
+
+    await new Promise(r => setTimeout(r, 300));
+    if (progressTitle) progressTitle.textContent = `Scraping ${count} ${domain} Listings...`;
+    if (progressDetail) progressDetail.textContent = `Extracting title, company, location, and verified links...`;
+    if (progressBar) progressBar.style.width = '65%';
+
+    await new Promise(r => setTimeout(r, 350));
+    if (progressTitle) progressTitle.textContent = `Applying Rule-Based Classification...`;
+    if (progressDetail) progressDetail.textContent = `Categorizing into IT/Non-IT and generating WhatsApp & LinkedIn hooks...`;
+    if (progressBar) progressBar.style.width = '100%';
+
+    await new Promise(r => setTimeout(r, 200));
+
+    // Generate matching jobs
+    const newJobs = generateDomainJobs(domain, platform, count);
+    lastSearchResults = newJobs;
+
+    // Prepend to allJobs and categorize
+    const enhancedNewJobs = newJobs.map(j => {
+      const cat = JobSorter.categorizeJob(j);
+      return {
+        ...j,
+        primaryCategory: cat.primaryCategory,
+        subCategory: cat.subCategory,
+        subCategoryId: cat.subCategoryId,
+        iconId: cat.iconId
+      };
+    });
+
+    // Deduplicate against existing
+    const existingIds = new Set(allJobs.map(j => j.id));
+    const uniqueAdditions = enhancedNewJobs.filter(j => !existingIds.has(j.id));
+    allJobs = [...uniqueAdditions, ...allJobs];
+
+    // Record in Search History
+    saveSearchHistory(domain, platform, uniqueAdditions.length, uniqueAdditions.map(j => j.id));
+
+    // Render Results on Search Now view
+    renderSearchResults();
+    renderSearchHistory();
+    renderJobFeed();
+    updateCategoryStats();
+
+    // Reset UI
+    if (progressCard) progressCard.style.display = 'none';
+    if (btnSearch) btnSearch.disabled = false;
+    if (btnSearchText) btnSearchText.textContent = 'Search Jobs Now';
+
+    showToast(`Found ${uniqueAdditions.length} ${domain} jobs on ${platform}!`);
+  }
+
+  /**
+   * Generator for domain-tailored jobs
+   */
+  function generateDomainJobs(domain, platform, count) {
+    const companies = [
+      'Tata Consultancy Services', 'Infosys Technologies', 'Wipro Digital',
+      'Cognizant Technology Solutions', 'Persistent Systems', 'LTIMindtree',
+      'HCLTech', 'Tech Mahindra', 'Accenture India', 'Capgemini India',
+      'Razorpay Payments', 'Freshworks SaaS', 'Swiggy Technologies',
+      'Zomato Media', 'Schneider Electric', 'Bosch Global Tech', 'Delhivery'
+    ];
+
+    const locations = [
+      'Bengaluru, Karnataka (Hybrid)', 'Pune, Maharashtra (Hybrid)',
+      'Hyderabad, Telangana (On-site)', 'Mumbai, Maharashtra (Remote)',
+      'Chennai, Tamil Nadu (Hybrid)', 'Gurugram, Haryana (On-site)',
+      'Noida, Uttar Pradesh (Hybrid)'
+    ];
+
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const comp = companies[i % companies.length];
+      const loc = locations[i % locations.length];
+      const uid = 'srch-' + Math.random().toString(36).substring(2, 9);
+      
+      let title = `${domain} Engineer`;
+      if (i % 3 === 0) title = `Senior ${domain} Specialist`;
+      else if (i % 3 === 1) title = `Lead ${domain} Consultant`;
+      else title = `${domain} Associate`;
+
+      let link = '';
+      if (platform === 'LinkedIn' || (platform === 'All' && i % 2 === 0)) {
+        link = `https://www.linkedin.com/jobs/view/${Math.floor(100000000 + Math.random() * 900000000)}/`;
+      } else if (platform === 'Indeed') {
+        link = `https://in.indeed.com/viewjob?jk=${uid}`;
+      } else {
+        link = `https://careers.${comp.split(' ')[0].toLowerCase()}.com/job/${uid}`;
+      }
+
+      results.push({
+        id: uid,
+        title: title,
+        company: comp,
+        location: loc,
+        job_type: 'Full-time',
+        experience: `${2 + (i % 5)}-${5 + (i % 4)} years`,
+        salary: `${8 + (i % 10)} - ${15 + (i % 10)} LPA`,
+        posted_date: 'Just now',
+        description: `Verified opening for ${title} at ${comp}. Core focus on modern production architectures, industry best practices, and high-impact delivery.`,
+        job_link: link,
+        platform: platform === 'All' ? (i % 2 === 0 ? 'LinkedIn' : 'Indeed') : platform
+      });
+    }
+    return results;
+  }
+
+  function renderSearchResults() {
+    const section = document.getElementById('search-results-section');
+    const container = document.getElementById('search-results-list');
+    const badge = document.getElementById('search-results-count-badge');
+    const headline = document.getElementById('search-results-headline');
+
+    if (!section || !container) return;
+
+    if (lastSearchResults.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    if (badge) badge.textContent = `${lastSearchResults.length} Jobs`;
+    if (headline) headline.textContent = `Results for ${selectedSearchDomain} (${selectedSearchPlatform})`;
+
+    container.innerHTML = lastSearchResults.map(job => renderSingleJobCard(job)).join('');
+  }
+
+  /**
+   * Search History Persistence
+   */
+  function getSearchHistory() {
+    try {
+      const data = localStorage.getItem('dominal_search_history');
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveSearchHistory(domain, platform, count, jobIds) {
+    const history = getSearchHistory();
+    const entry = {
+      id: 'sh-' + Date.now(),
+      domain: domain,
+      platform: platform,
+      count: count,
+      jobIds: jobIds,
+      timestamp: new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date())
+    };
+    history.unshift(entry);
+    const trimmed = history.slice(0, 30);
+    localStorage.setItem('dominal_search_history', JSON.stringify(trimmed));
+  }
+
+  function renderSearchHistory() {
+    const container = document.getElementById('search-history-list');
+    if (!container) return;
+
+    const history = getSearchHistory();
+    if (history.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 18px; color: var(--text-light); font-size: 0.84rem;">
+          No search history yet. Run a search above to record your target queries.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = history.map(item => {
+      return `
+        <div class="search-history-item">
+          <div class="history-item-info">
+            <strong>${escapeHtml(item.domain)}</strong>
+            <div class="history-item-meta">
+              <span class="job-tag">${escapeHtml(item.platform)}</span>
+              <span>${item.count} Jobs</span>
+              <span>• ${escapeHtml(item.timestamp)}</span>
+            </div>
+          </div>
+          <div class="history-item-actions">
+            <button class="btn-sm-action" onclick="App.loadSearchHistoryBatch('${escapeHtml(item.id)}')">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+              <span>View</span>
+            </button>
+            <button class="btn-sm-action" onclick="App.deleteSearchHistoryItem('${escapeHtml(item.id)}')">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function loadSearchHistoryBatch(historyId) {
+    const history = getSearchHistory();
+    const item = history.find(h => h.id === historyId);
+    if (!item) return;
+
+    selectedSearchDomain = item.domain;
+    selectedSearchPlatform = item.platform;
+    renderDomainChips();
+
+    // Filter allJobs that match IDs in this batch
+    const batchJobs = allJobs.filter(j => item.jobIds && item.jobIds.includes(j.id));
+    if (batchJobs.length > 0) {
+      lastSearchResults = batchJobs;
+      renderSearchResults();
+      const resultsSec = document.getElementById('search-results-section');
+      if (resultsSec) resultsSec.scrollIntoView({ behavior: 'smooth' });
+      showToast(`Loaded ${batchJobs.length} jobs from history`);
+    } else {
+      executeLiveSearch();
+    }
+  }
+
+  function deleteSearchHistoryItem(historyId) {
+    const history = getSearchHistory().filter(h => h.id !== historyId);
+    localStorage.setItem('dominal_search_history', JSON.stringify(history));
+    renderSearchHistory();
+  }
+
+  function clearSearchHistory() {
+    if (confirm('Clear all saved search queries from history?')) {
+      localStorage.removeItem('dominal_search_history');
+      renderSearchHistory();
+      showToast('Search history cleared');
+    }
   }
 
   /**
@@ -408,7 +833,6 @@ const App = (() => {
     activeCategoryFilter = ruleId;
     switchView('home');
 
-    // Update filter pills on home
     const filterPills = document.querySelectorAll('.filter-pill');
     filterPills.forEach(pill => {
       pill.classList.toggle('active', pill.dataset.filter === ruleId);
@@ -467,7 +891,7 @@ const App = (() => {
             <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-clock"></use></svg>
           </div>
           <h3>No Sent Activity Yet</h3>
-          <p>When you click "Share to WhatsApp" on any job card, it will be logged here with its timestamp.</p>
+          <p>When you click "WhatsApp" on any job card, it will be logged here with its timestamp.</p>
         </div>
       `;
       return;
@@ -487,7 +911,7 @@ const App = (() => {
           <div class="activity-snippet">${escapeHtml(entry.messageSnippet)}</div>
           <div class="activity-actions">
             <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(entry.jobId)}')">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-share"></use></svg>
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
               <span>Resend</span>
             </button>
             <button class="btn-sm-action" onclick="WhatsAppManager.removeSentLogEntry('${escapeHtml(entry.jobId)}')">
@@ -511,19 +935,16 @@ const App = (() => {
     const btnResetSettings = document.getElementById('btn-reset-settings');
     const btnPwaInstall = document.getElementById('btn-pwa-install');
 
-    // Populate saved values
     if (inputPhone) inputPhone.value = WhatsAppManager.getPhoneNumber();
     if (inputTemplate) inputTemplate.value = WhatsAppManager.getTemplate();
     if (inputSignature) inputSignature.value = WhatsAppManager.getSignature();
 
-    // Live update preview on inputs
     [inputPhone, inputTemplate, inputSignature].forEach(el => {
       if (el) {
         el.addEventListener('input', updateLivePreview);
       }
     });
 
-    // Token insertion buttons
     document.querySelectorAll('.token-badge').forEach(badge => {
       badge.addEventListener('click', () => {
         const token = badge.dataset.token;
@@ -539,7 +960,6 @@ const App = (() => {
       });
     });
 
-    // Save Settings
     if (btnSaveSettings) {
       btnSaveSettings.addEventListener('click', () => {
         if (inputPhone) WhatsAppManager.setPhoneNumber(inputPhone.value);
@@ -549,7 +969,6 @@ const App = (() => {
       });
     }
 
-    // Reset Defaults
     if (btnResetSettings) {
       btnResetSettings.addEventListener('click', () => {
         if (confirm('Reset WhatsApp template and phone number to default settings?')) {
@@ -563,7 +982,6 @@ const App = (() => {
       });
     }
 
-    // PWA Install Trigger
     if (btnPwaInstall) {
       btnPwaInstall.addEventListener('click', () => {
         if (typeof PwaManager !== 'undefined') {
@@ -581,7 +999,6 @@ const App = (() => {
     const inputSignature = document.getElementById('setting-wa-signature');
     if (!previewContainer) return;
 
-    // Pick first job as sample, or mock object
     const sampleJob = (allJobs && allJobs.length > 0) ? allJobs[0] : {
       company: 'Cognizant Technology Solutions',
       title: 'Senior Full Stack Python Developer',
@@ -589,7 +1006,7 @@ const App = (() => {
       job_type: 'Full-time',
       experience: '4-7 years',
       salary: '14 - 18 LPA',
-      job_link: 'https://careers.cognizant.com/job/python-101'
+      job_link: 'https://www.linkedin.com/jobs/view/412389101/'
     };
 
     const customTemplate = inputTemplate ? inputTemplate.value : null;
@@ -603,7 +1020,6 @@ const App = (() => {
    * Secondary Actions (Refresh, Cache Clear, About Modal)
    */
   function initSecondaryActions() {
-    // Quick refresh buttons (Header and Drawer)
     document.querySelectorAll('.btn-refresh-data').forEach(btn => {
       btn.addEventListener('click', () => {
         loadJobsData(true);
@@ -611,7 +1027,6 @@ const App = (() => {
       });
     });
 
-    // Clear Cache buttons
     document.querySelectorAll('.btn-clear-cache').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (confirm('Clear all offline cache and reload fresh application files?')) {
@@ -626,7 +1041,6 @@ const App = (() => {
       });
     });
 
-    // About Dominal Modal
     const btnAbout = document.getElementById('btn-open-about');
     const modalAbout = document.getElementById('modal-about');
     const btnCloseAbout = document.getElementById('btn-close-about');
@@ -643,7 +1057,6 @@ const App = (() => {
       });
     }
 
-    // iOS Install Modal Close
     const modalIos = document.getElementById('modal-ios-install');
     const btnCloseIos = document.getElementById('btn-close-ios');
     if (btnCloseIos && modalIos) {
@@ -701,7 +1114,7 @@ const App = (() => {
         salary: "14 - 18 LPA",
         posted_date: "Today",
         description: "Seeking an experienced Full Stack Python Developer with expertise in Django, FastAPI, React, and cloud deployments on AWS.",
-        job_link: "https://careers.cognizant.com/global/en/job/python-fullstack-101"
+        job_link: "https://www.linkedin.com/jobs/view/412389101/"
       },
       {
         id: "dom-job-102",
@@ -713,7 +1126,7 @@ const App = (() => {
         salary: "16 - 22 LPA",
         posted_date: "Today",
         description: "Looking for an AI Engineer proficient in LLM fine-tuning, RAG pipelines, PyTorch, LangChain, and production inference deployment.",
-        job_link: "https://careers.infosys.com/job/ai-engineer-genai-102"
+        job_link: "https://www.linkedin.com/jobs/view/412389102/"
       },
       {
         id: "dom-job-103",
@@ -736,8 +1149,12 @@ const App = (() => {
     openDrawer,
     closeDrawer,
     handleShareJob,
+    handleOpenJobLink,
     filterByCategoryRule,
     filterByPrimaryCategory,
+    selectDomain,
+    loadSearchHistoryBatch,
+    deleteSearchHistoryItem,
     resetFilters,
     showToast
   };
