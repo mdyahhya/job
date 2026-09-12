@@ -10,9 +10,19 @@ const App = (() => {
   let activeCategoryFilter = 'all';
   let activePlatformFilter = localStorage.getItem('dominal_platform_filter') || 'all';
   let activeJobTypeFilter = localStorage.getItem('dominal_type_filter') || 'all';
+  let activeWorkplaceFilter = localStorage.getItem('dominal_workplace_filter') || 'all';
   let activeStatusFilter = localStorage.getItem('dominal_feed_status_filter') || 'fresh'; // 'fresh' (default, hides checked on refresh) or 'all'
-  let currentHistoryTab = 'checked'; // 'checked' or 'archive'
+  let currentHistoryTab = 'checked'; // 'checked', 'archive', or 'queries'
   let searchQuery = '';
+
+  // Dedicated Scraped Jobs Archive Filter State
+  let scrapedFilters = {
+    query: '',
+    category: 'all',
+    workplace: 'all',
+    platform: 'all',
+    status: 'all' // 'all' (Fresh First), 'fresh', 'checked'
+  };
 
   /**
    * ==========================================================================
@@ -188,10 +198,33 @@ const App = (() => {
       const archiveCount = this.getFetchedArchive().length;
       const archiveCountTxt = document.getElementById('txt-history-archive-count');
       if (archiveCountTxt) {
-        archiveCountTxt.textContent = `All Fetched Archive (${archiveCount})`;
+        archiveCountTxt.textContent = `All Scraped Archive (${archiveCount})`;
       }
+      const queriesCount = getSearchHistory().length;
+      const queriesCountTxt = document.getElementById('txt-history-queries-count');
+      if (queriesCountTxt) {
+        queriesCountTxt.textContent = `Search Queries (${queriesCount})`;
+      }
+      updateScrapedBadges();
     }
   };
+
+  /**
+   * Update Scraped Jobs counters on taskbar and section header
+   */
+  function updateScrapedBadges() {
+    const totalCount = allJobs.length;
+    const freshCount = allJobs.filter(j => !JobHistoryManager.isChecked(j.id)).length;
+    const taskbarScrapedBadge = document.getElementById('taskbar-scraped-badge');
+    if (taskbarScrapedBadge) {
+      taskbarScrapedBadge.textContent = freshCount;
+      taskbarScrapedBadge.style.display = freshCount > 0 ? 'inline-block' : 'none';
+    }
+    const txtTotalBadge = document.getElementById('txt-scraped-total-badge');
+    if (txtTotalBadge) {
+      txtTotalBadge.textContent = `${totalCount} Scraped Openings`;
+    }
+  }
 
   // Search Now State - Expanded with Core Engineering & Technology Domains
   const DEFAULT_DOMAINS = [
@@ -219,6 +252,7 @@ const App = (() => {
   let selectedSearchPlatform = 'LinkedIn';
   let selectedSearchCount = 10;
   let selectedSearchType = 'all'; // 'all', 'job', 'internship'
+  let selectedSearchWorkplace = 'all'; // 'all', 'remote', 'onsite'
   let isSearchingCanceled = false;
   let lastSearchResults = [];
 
@@ -229,6 +263,7 @@ const App = (() => {
     initNavigation();
     initDrawer();
     initSearchAndFilters();
+    initScrapedView();
     initSearchNowView();
     initSettingsForm();
     initActivityLog();
@@ -251,6 +286,7 @@ const App = (() => {
     // Listen for shared jobs to re-render feed cards
     window.addEventListener('dominal:job-shared', () => {
       renderJobFeed();
+      renderScrapedJobs();
       renderSearchResults();
       renderActivityLog();
       updateCategoryStats();
@@ -259,13 +295,14 @@ const App = (() => {
 
     window.addEventListener('dominal:job-shared-updated', () => {
       renderJobFeed();
+      renderScrapedJobs();
       renderSearchResults();
       renderActivityLog();
     });
 
     // Handle initial hash route if any
     const initialHash = window.location.hash.replace('#', '');
-    if (['home', 'search-now', 'categories', 'activity', 'settings'].includes(initialHash)) {
+    if (['home', 'scraped', 'search-now', 'categories', 'activity', 'settings'].includes(initialHash)) {
       switchView(initialHash);
     } else {
       switchView('home');
@@ -347,7 +384,7 @@ const App = (() => {
    * SPA View Switching
    */
   function switchView(viewName) {
-    if (!['home', 'search-now', 'categories', 'activity', 'settings'].includes(viewName)) {
+    if (!['home', 'scraped', 'search-now', 'categories', 'activity', 'settings'].includes(viewName)) {
       viewName = 'home';
     }
     currentView = viewName;
@@ -382,10 +419,12 @@ const App = (() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Refresh specific view contents
-    if (viewName === 'categories') {
+    if (viewName === 'home') {
+      renderJobFeed();
+    } else if (viewName === 'scraped') {
+      renderScrapedJobs();
+    } else if (viewName === 'categories') {
       updateCategoryStats();
-    } else if (viewName === 'search-now') {
-      renderSearchHistory();
     } else if (viewName === 'activity') {
       renderActivityLog();
     } else if (viewName === 'settings') {
@@ -412,7 +451,7 @@ const App = (() => {
 
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.replace('#', '');
-      if (['home', 'search-now', 'categories', 'activity', 'settings'].includes(hash) && hash !== currentView) {
+      if (['home', 'scraped', 'search-now', 'categories', 'activity', 'settings'].includes(hash) && hash !== currentView) {
         switchView(hash);
       }
     });
@@ -532,6 +571,19 @@ const App = (() => {
       });
     });
 
+    // Secondary Workplace Mode Filter (All Modes, Remote, On-Site) with localStorage persistence
+    const workplacePills = document.querySelectorAll('.sub-pill[data-workplace]');
+    workplacePills.forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.workplace === activeWorkplaceFilter);
+      pill.addEventListener('click', () => {
+        workplacePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeWorkplaceFilter = pill.dataset.workplace || 'all';
+        localStorage.setItem('dominal_workplace_filter', activeWorkplaceFilter);
+        renderJobFeed();
+      });
+    });
+
     // Secondary Job Type Filter (All, Direct Jobs, Internships) with localStorage persistence
     const typePills = document.querySelectorAll('.sub-pill[data-type]');
     typePills.forEach(pill => {
@@ -571,7 +623,8 @@ const App = (() => {
       query: searchQuery,
       category: activeCategoryFilter,
       platform: activePlatformFilter,
-      jobType: activeJobTypeFilter
+      jobType: activeJobTypeFilter,
+      workplace: activeWorkplaceFilter
     });
 
     const totalMatching = filteredJobs.length;
@@ -582,10 +635,18 @@ const App = (() => {
       filteredJobs = filteredJobs.filter(j => !JobHistoryManager.isChecked(j.id));
     }
 
+    // Sort: Fresh un-ticked jobs stay on top, checked jobs sink to the bottom
+    filteredJobs.sort((a, b) => {
+      const aChecked = JobHistoryManager.isChecked(a.id) ? 1 : 0;
+      const bChecked = JobHistoryManager.isChecked(b.id) ? 1 : 0;
+      return aChecked - bChecked;
+    });
+
     if (countDisplay) {
       const platformLabel = activePlatformFilter === 'linkedin' ? 'LinkedIn' : (activePlatformFilter === 'indeed' ? 'Indeed' : '');
+      const wpLabel = activeWorkplaceFilter === 'remote' ? 'Remote' : (activeWorkplaceFilter === 'onsite' ? 'On-site' : '');
       const typeLabel = activeJobTypeFilter === 'internship' ? 'Internships' : (activeJobTypeFilter === 'job' ? 'Jobs' : 'Openings');
-      const filterSummary = [platformLabel, typeLabel].filter(Boolean).join(' ');
+      const filterSummary = [platformLabel, wpLabel, typeLabel].filter(Boolean).join(' ');
       const statusNote = (activeStatusFilter === 'fresh' && checkedCountInMatch > 0)
         ? ` (${checkedCountInMatch} checked hidden)`
         : (activeStatusFilter === 'all' && checkedCountInMatch > 0 ? ` (${checkedCountInMatch} checked)` : '');
@@ -605,7 +666,7 @@ const App = (() => {
             <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-search"></use></svg>
           </div>
           <h3>Not Available</h3>
-          <p>No matching verified jobs found in local database${searchQuery ? ` for "${escapeHtml(searchQuery)}"` : ''}${activePlatformFilter !== 'all' ? ` on ${activePlatformFilter === 'linkedin' ? 'LinkedIn' : 'Indeed'}` : ''}${activeJobTypeFilter !== 'all' ? ` (${activeJobTypeFilter === 'internship' ? 'Internships' : 'Direct Jobs'})` : ''}.</p>
+          <p>No matching verified jobs found in local database${searchQuery ? ` for "${escapeHtml(searchQuery)}"` : ''}${activePlatformFilter !== 'all' ? ` on ${activePlatformFilter === 'linkedin' ? 'LinkedIn' : 'Indeed'}` : ''}${activeWorkplaceFilter !== 'all' ? ` (${activeWorkplaceFilter === 'remote' ? 'Remote Only' : 'On-Site Only'})` : ''}${activeJobTypeFilter !== 'all' ? ` (${activeJobTypeFilter === 'internship' ? 'Internships' : 'Direct Jobs'})` : ''}.</p>
           <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
             <a href="${liveSearchUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${activePlatformFilter === 'indeed' ? '#icon-globe' : '#icon-linkedin'}"></use></svg>
@@ -634,13 +695,20 @@ const App = (() => {
     const isLinkedIn = isLinkedInJob(job);
     const catBadgeClass = getBadgeClass(job.primaryCategory, job.subCategoryId);
 
+    // Explicit workplace mode detection and icon
+    const wpType = job.workplace_type || (typeof JobSorter !== 'undefined' ? JobSorter.getWorkplaceType(job) : 'On-site');
+    const isWpRemote = wpType.toLowerCase().includes('remote');
+    const isWpHybrid = wpType.toLowerCase().includes('hybrid');
+    const wpClass = isWpRemote ? 'tag-workplace-remote' : (isWpHybrid ? 'tag-workplace-hybrid' : 'tag-workplace-onsite');
+    const wpIcon = isWpRemote ? 'icon-wifi' : (isWpHybrid ? 'icon-building' : 'icon-map-pin');
+
     return `
       <article class="job-card ${isShared ? 'is-shared' : ''} ${isChecked ? 'is-checked' : ''}" id="card-${escapeHtml(job.id)}" data-job-id="${escapeHtml(job.id)}">
         <div class="job-card-header">
           <div class="job-header-left">
             <button type="button" class="job-checkbox-btn ${isChecked ? 'is-checked' : ''}"
                     onclick="event.stopPropagation(); App.toggleJobChecked('${escapeHtml(job.id)}', event)"
-                    title="${isChecked ? 'Checked (will be hidden from fresh feed on refresh)' : 'Mark job as checked / sent'}"
+                    title="${isChecked ? 'Checked (saved to History & moved down)' : 'Mark job as checked / sent'}"
                     aria-label="${isChecked ? 'Uncheck job' : 'Check job'}">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${isChecked ? 'icon-check-square' : 'icon-square'}"></use></svg>
               <span class="btn-check-label">${isChecked ? 'Checked' : 'Mark Done'}</span>
@@ -683,6 +751,11 @@ const App = (() => {
         ` : ''}
 
         <div class="job-tags-row">
+          <!-- Explicit Workplace Badge (Remote / On-site / Hybrid) -->
+          <span class="job-tag ${wpClass}" title="Workplace Mode: ${escapeHtml(wpType)}">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${wpIcon}"></use></svg>
+            <span>${escapeHtml(wpType)}</span>
+          </span>
           ${job.experience ? `
             <span class="job-tag">Exp: ${escapeHtml(job.experience)}</span>
           ` : ''}
@@ -770,13 +843,19 @@ const App = (() => {
     JobHistoryManager.updateHistoryBadge();
 
     if (nowChecked) {
-      showToast('Job marked checked - saved in History');
+      showToast('Job marked checked - moved to bottom');
     } else {
-      showToast('Job unchecked - returned to fresh feed');
+      showToast('Job unchecked - restored to fresh feed');
     }
 
-    if (currentView === 'activity') {
+    if (currentView === 'home') {
+      renderJobFeed();
+    } else if (currentView === 'scraped') {
+      renderScrapedJobs();
+    } else if (currentView === 'activity') {
       renderActivityLog();
+    } else if (currentView === 'search-now') {
+      renderSearchResults();
     }
   }
 
@@ -894,6 +973,15 @@ const App = (() => {
       });
     });
 
+    // Workplace Mode Selection (All Modes, Remote Only, On-Site Only)
+    document.querySelectorAll('.search-workplace-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.search-workplace-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedSearchWorkplace = pill.dataset.workplace || 'all';
+      });
+    });
+
     // Start Search Button
     const btnExecuteSearch = document.getElementById('btn-execute-search');
     if (btnExecuteSearch) {
@@ -910,14 +998,6 @@ const App = (() => {
     if (btnStopProgress) {
       btnStopProgress.addEventListener('click', stopLiveSearch);
     }
-
-    // Clear Search History Button
-    const btnClearSearchHistory = document.getElementById('btn-clear-search-history');
-    if (btnClearSearchHistory) {
-      btnClearSearchHistory.addEventListener('click', clearSearchHistory);
-    }
-
-    renderSearchHistory();
   }
 
   function getDomainIcon(domain) {
@@ -1066,19 +1146,28 @@ const App = (() => {
     await new Promise(r => setTimeout(r, 180));
     if (isSearchingCanceled) return;
 
-    // Filter real jobs matching domain keywords, platform, and opportunity type strictly
+    // Filter real jobs matching domain keywords, platform, opportunity type, and workplace mode strictly
     const platformFilterVal = platform.toLowerCase() === 'indeed' ? 'indeed' : (platform.toLowerCase() === 'linkedin' ? 'linkedin' : 'all');
     let matched = JobSorter.filterJobs(allJobs, {
       query: domain,
       category: 'all',
       platform: platformFilterVal,
-      jobType: jobTypeFilter
+      jobType: jobTypeFilter,
+      workplace: selectedSearchWorkplace
     });
 
     if (isSearchingCanceled) return;
 
     // Enforce strict matching: no arbitrary supplemental dumping!
     matched = matched.slice(0, count);
+
+    // Sort: Fresh un-ticked jobs stay on top, checked jobs sink to bottom
+    matched.sort((a, b) => {
+      const aChecked = JobHistoryManager.isChecked(a.id) ? 1 : 0;
+      const bChecked = JobHistoryManager.isChecked(b.id) ? 1 : 0;
+      return aChecked - bChecked;
+    });
+
     lastSearchResults = matched;
 
     // Save newly matched jobs to persistent archive
@@ -1096,12 +1185,12 @@ const App = (() => {
     if (isSearchingCanceled) return;
 
     // Record in Search History
-    saveSearchHistory(domain, platform, matched.length, matched.map(j => j.id));
+    saveSearchHistory(domain, platform, matched.length, matched.map(j => j.id), selectedSearchWorkplace, jobTypeFilter);
 
-    // Render Results on Search Now view and Home Feed
+    // Render Results on Search Now view, Home Feed, and Scraped Jobs Archive
     renderSearchResults();
-    renderSearchHistory();
     renderJobFeed();
+    renderScrapedJobs();
     updateCategoryStats();
     JobHistoryManager.updateHistoryBadge();
 
@@ -1191,7 +1280,7 @@ const App = (() => {
     }
   }
 
-  function saveSearchHistory(domain, platform, count, jobIds) {
+  function saveSearchHistory(domain, platform, count, jobIds, workplace = 'all', jobType = 'all') {
     const history = getSearchHistory();
     const entry = {
       id: 'sh-' + Date.now(),
@@ -1199,6 +1288,8 @@ const App = (() => {
       platform: platform,
       count: count,
       jobIds: jobIds,
+      workplace: workplace || 'all',
+      jobType: jobType || 'all',
       timestamp: new Intl.DateTimeFormat('en-US', {
         month: 'short',
         day: 'numeric',
@@ -1207,82 +1298,63 @@ const App = (() => {
       }).format(new Date())
     };
     history.unshift(entry);
-    const trimmed = history.slice(0, 30);
+    const trimmed = history.slice(0, 50);
     localStorage.setItem('dominal_search_history', JSON.stringify(trimmed));
+    JobHistoryManager.updateHistoryBadge();
   }
 
-  function renderSearchHistory() {
-    const container = document.getElementById('search-history-list');
-    if (!container) return;
-
-    const history = getSearchHistory();
-    if (history.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 18px; color: var(--text-light); font-size: 0.84rem;">
-          No search history yet. Run a search above to record your target queries.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML = history.map(item => {
-      return `
-        <div class="search-history-item">
-          <div class="history-item-info">
-            <strong>${escapeHtml(item.domain)}</strong>
-            <div class="history-item-meta">
-              <span class="job-tag">${escapeHtml(item.platform)}</span>
-              <span>${item.count} Jobs</span>
-              <span>• ${escapeHtml(item.timestamp)}</span>
-            </div>
-          </div>
-          <div class="history-item-actions">
-            <button class="btn-sm-action" onclick="App.loadSearchHistoryBatch('${escapeHtml(item.id)}')">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
-              <span>View</span>
-            </button>
-            <button class="btn-sm-action" onclick="App.deleteSearchHistoryItem('${escapeHtml(item.id)}')">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function loadSearchHistoryBatch(historyId) {
+  function reRunSearchQuery(historyId) {
     const history = getSearchHistory();
     const item = history.find(h => h.id === historyId);
     if (!item) return;
 
     selectedSearchDomain = item.domain;
     selectedSearchPlatform = item.platform;
+    selectedSearchWorkplace = item.workplace || 'all';
+    selectedSearchType = item.jobType || 'all';
+
+    // Switch to Search Now view
+    switchView('search-now');
+
+    // Update UI chips & pills in Search Now
     renderDomainChips();
 
-    // Filter allJobs that match IDs in this batch
-    const batchJobs = allJobs.filter(j => item.jobIds && item.jobIds.includes(j.id));
-    if (batchJobs.length > 0) {
-      lastSearchResults = batchJobs;
-      renderSearchResults();
-      const resultsSec = document.getElementById('search-results-section');
-      if (resultsSec) resultsSec.scrollIntoView({ behavior: 'smooth' });
-      showToast(`Loaded ${batchJobs.length} jobs from history`);
-    } else {
-      executeLiveSearch();
-    }
+    document.querySelectorAll('.platform-option').forEach(o => {
+      const radio = o.querySelector('input[type="radio"]');
+      const isMatch = radio && radio.value === selectedSearchPlatform;
+      o.classList.toggle('active', isMatch);
+      if (radio) radio.checked = isMatch;
+    });
+
+    document.querySelectorAll('.search-type-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.type === selectedSearchType);
+    });
+
+    document.querySelectorAll('.search-workplace-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.workplace === selectedSearchWorkplace);
+    });
+
+    executeLiveSearch();
   }
 
   function deleteSearchHistoryItem(historyId) {
     const history = getSearchHistory().filter(h => h.id !== historyId);
     localStorage.setItem('dominal_search_history', JSON.stringify(history));
-    renderSearchHistory();
+    JobHistoryManager.updateHistoryBadge();
+    if (currentView === 'activity') {
+      renderActivityLog();
+    }
+    showToast('Search query deleted from history');
   }
 
   function clearSearchHistory() {
     if (confirm('Clear all saved search queries from history?')) {
       localStorage.removeItem('dominal_search_history');
-      renderSearchHistory();
-      showToast('Search history cleared');
+      JobHistoryManager.updateHistoryBadge();
+      if (currentView === 'activity') {
+        renderActivityLog();
+      }
+      showToast('Search query history cleared');
     }
   }
 
@@ -1350,9 +1422,11 @@ const App = (() => {
     activeCategoryFilter = 'all';
     activePlatformFilter = 'all';
     activeJobTypeFilter = 'all';
+    activeWorkplaceFilter = 'all';
     activeStatusFilter = 'fresh';
     localStorage.setItem('dominal_platform_filter', 'all');
     localStorage.setItem('dominal_type_filter', 'all');
+    localStorage.setItem('dominal_workplace_filter', 'all');
     localStorage.setItem('dominal_feed_status_filter', 'fresh');
 
     const searchInput = document.getElementById('input-job-search');
@@ -1371,6 +1445,10 @@ const App = (() => {
       p.classList.toggle('active', p.dataset.platform === 'all');
     });
 
+    document.querySelectorAll('.sub-pill[data-workplace]').forEach(p => {
+      p.classList.toggle('active', p.dataset.workplace === 'all');
+    });
+
     document.querySelectorAll('.sub-pill[data-type]').forEach(p => {
       p.classList.toggle('active', p.dataset.type === 'all');
     });
@@ -1382,23 +1460,188 @@ const App = (() => {
     renderJobFeed();
   }
 
+  /**
+   * ==========================================================================
+   * SCRAPED JOBS ARCHIVE (FULL MULTI-SOURCE SCRAPED DATABASE)
+   * Keeps every scraped job across LinkedIn, Indeed, RemoteOK, Remotive,
+   * Arbeitnow, and WeWorkRemotely with multi-dimensional filtering.
+   * Fresh un-ticked jobs stay on top; checked jobs sink to the bottom.
+   * ==========================================================================
+   */
+  function initScrapedView() {
+    const searchInput = document.getElementById('input-scraped-search');
+    const btnClearSearch = document.getElementById('btn-clear-scraped-search');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        scrapedFilters.query = e.target.value.trim();
+        if (btnClearSearch) {
+          btnClearSearch.classList.toggle('visible', scrapedFilters.query.length > 0);
+        }
+        renderScrapedJobs();
+      });
+    }
+
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+          scrapedFilters.query = '';
+          btnClearSearch.classList.remove('visible');
+          renderScrapedJobs();
+          searchInput.focus();
+        }
+      });
+    }
+
+    // Category pills for Scraped Jobs
+    document.querySelectorAll('.filter-pill[data-scraped-cat]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill[data-scraped-cat]').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        scrapedFilters.category = pill.dataset.scrapedCat || 'all';
+        renderScrapedJobs();
+      });
+    });
+
+    // Workplace pills for Scraped Jobs
+    document.querySelectorAll('.sub-pill[data-scraped-workplace]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.sub-pill[data-scraped-workplace]').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        scrapedFilters.workplace = pill.dataset.scrapedWorkplace || 'all';
+        renderScrapedJobs();
+      });
+    });
+
+    // Platform pills for Scraped Jobs
+    document.querySelectorAll('.sub-pill[data-scraped-platform]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.sub-pill[data-scraped-platform]').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        scrapedFilters.platform = pill.dataset.scrapedPlatform || 'all';
+        renderScrapedJobs();
+      });
+    });
+
+    // Status pills for Scraped Jobs (All - Fresh First, Fresh Only, Checked Only)
+    document.querySelectorAll('.sub-pill[data-scraped-status]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.sub-pill[data-scraped-status]').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        scrapedFilters.status = pill.dataset.scrapedStatus || 'all';
+        renderScrapedJobs();
+      });
+    });
+  }
+
+  function renderScrapedJobs() {
+    const feedContainer = document.getElementById('scraped-jobs-list');
+    const countDisplay = document.getElementById('scraped-feed-count-display');
+    if (!feedContainer) return;
+
+    let filtered = JobSorter.filterJobs(allJobs, {
+      query: scrapedFilters.query,
+      category: scrapedFilters.category,
+      platform: scrapedFilters.platform,
+      jobType: 'all',
+      workplace: scrapedFilters.workplace
+    });
+
+    const totalMatching = filtered.length;
+    const checkedCount = filtered.filter(j => JobHistoryManager.isChecked(j.id)).length;
+
+    if (scrapedFilters.status === 'fresh') {
+      filtered = filtered.filter(j => !JobHistoryManager.isChecked(j.id));
+    } else if (scrapedFilters.status === 'checked') {
+      filtered = filtered.filter(j => JobHistoryManager.isChecked(j.id));
+    }
+
+    // Sort: Fresh un-ticked jobs stay on top, checked jobs sink down
+    filtered.sort((a, b) => {
+      const aChecked = JobHistoryManager.isChecked(a.id) ? 1 : 0;
+      const bChecked = JobHistoryManager.isChecked(b.id) ? 1 : 0;
+      return aChecked - bChecked;
+    });
+
+    if (countDisplay) {
+      const catLabel = scrapedFilters.category !== 'all' ? ` in ${scrapedFilters.category.toUpperCase()}` : '';
+      const wpLabel = scrapedFilters.workplace !== 'all' ? ` (${scrapedFilters.workplace === 'remote' ? 'Remote' : 'On-Site'})` : '';
+      const statusNote = (scrapedFilters.status === 'all' && checkedCount > 0)
+        ? ` • ${checkedCount} checked below`
+        : '';
+      countDisplay.textContent = `Showing ${filtered.length} of ${allJobs.length} Scraped Openings${catLabel}${wpLabel}${statusNote}`;
+    }
+
+    updateScrapedBadges();
+
+    if (filtered.length === 0) {
+      feedContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+          </div>
+          <h3>No Scraped Jobs Found</h3>
+          <p>No listings match your selected scraped filter criteria.</p>
+          <button class="btn-secondary" onclick="App.resetScrapedFilters()" style="margin-top: 12px;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+            <span>Reset Scraped Filters</span>
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    feedContainer.innerHTML = filtered.map(job => renderSingleJobCard(job)).join('');
+  }
+
+  function resetScrapedFilters() {
+    scrapedFilters = { query: '', category: 'all', workplace: 'all', platform: 'all', status: 'all' };
+    const searchInput = document.getElementById('input-scraped-search');
+    if (searchInput) searchInput.value = '';
+    const btnClearSearch = document.getElementById('btn-clear-scraped-search');
+    if (btnClearSearch) btnClearSearch.classList.remove('visible');
+
+    document.querySelectorAll('.filter-pill[data-scraped-cat]').forEach(p => {
+      p.classList.toggle('active', p.dataset.scrapedCat === 'all');
+    });
+    document.querySelectorAll('.sub-pill[data-scraped-workplace]').forEach(p => {
+      p.classList.toggle('active', p.dataset.scrapedWorkplace === 'all');
+    });
+    document.querySelectorAll('.sub-pill[data-scraped-platform]').forEach(p => {
+      p.classList.toggle('active', p.dataset.scrapedPlatform === 'all');
+    });
+    document.querySelectorAll('.sub-pill[data-scraped-status]').forEach(p => {
+      p.classList.toggle('active', p.dataset.scrapedStatus === 'all');
+    });
+
+    renderScrapedJobs();
+  }
+
   function initActivityLog() {
     renderActivityLog();
   }
 
   function switchHistoryTab(tabName) {
-    currentHistoryTab = tabName === 'archive' ? 'archive' : 'checked';
+    currentHistoryTab = ['archive', 'queries'].includes(tabName) ? tabName : 'checked';
     const tabChecked = document.getElementById('tab-history-checked');
     const tabArchive = document.getElementById('tab-history-archive');
+    const tabQueries = document.getElementById('tab-history-queries');
     if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
     if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
+    if (tabQueries) tabQueries.classList.toggle('active', currentHistoryTab === 'queries');
     renderActivityLog();
   }
 
   function clearCheckedHistory() {
+    if (currentHistoryTab === 'queries') {
+      clearSearchHistory();
+      return;
+    }
     JobHistoryManager.clearChecked();
     renderActivityLog();
     renderJobFeed();
+    renderScrapedJobs();
     showToast('Checked history cleared. Jobs restored to fresh feed.');
   }
 
@@ -1406,14 +1649,16 @@ const App = (() => {
     JobHistoryManager.uncheck(jobId);
     renderActivityLog();
     renderJobFeed();
+    renderScrapedJobs();
     showToast('Job unchecked and restored to fresh feed');
   }
 
   /**
    * Render Job History & Checked View (View 4)
-   * Supports two distinct tabs:
+   * Supports three distinct tabs:
    * 1. Checked Jobs: Openings reviewed, sent to WhatsApp, or ticked by user
-   * 2. All Fetched Archive: All openings ever fetched by scraper or Search Now
+   * 2. All Scraped Archive: All openings ever fetched by scraper or Search Now
+   * 3. Search Queries: Historical search queries run in Search Now (relocated from Search Now)
    */
   function renderActivityLog() {
     const listContainer = document.getElementById('activity-log-list');
@@ -1423,8 +1668,10 @@ const App = (() => {
 
     const tabChecked = document.getElementById('tab-history-checked');
     const tabArchive = document.getElementById('tab-history-archive');
+    const tabQueries = document.getElementById('tab-history-queries');
     if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
     if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
+    if (tabQueries) tabQueries.classList.toggle('active', currentHistoryTab === 'queries');
 
     if (currentHistoryTab === 'checked') {
       const checkedJobs = JobHistoryManager.getCheckedJobs();
@@ -1472,7 +1719,7 @@ const App = (() => {
           </div>
         `;
       }).join('');
-    } else {
+    } else if (currentHistoryTab === 'archive') {
       // Archive of all fetched jobs
       const archive = JobHistoryManager.getFetchedArchive();
       if (archive.length === 0) {
@@ -1526,6 +1773,49 @@ const App = (() => {
           </div>
         `;
       }).join('');
+    } else if (currentHistoryTab === 'queries') {
+      const history = getSearchHistory();
+      if (history.length === 0) {
+        listContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+            </div>
+            <h3>No Search History Queries</h3>
+            <p>Saved search queries from Search Now are logged here so you can re-run or inspect them anytime.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = history.map(item => {
+        const wpText = item.workplace === 'remote' ? 'Remote Only' : (item.workplace === 'onsite' ? 'On-Site Only' : 'All Modes');
+        const typeText = item.jobType === 'internship' ? 'Internships' : (item.jobType === 'job' ? 'Direct Jobs' : 'All Types');
+        return `
+          <div class="activity-item query-history-card">
+            <div class="activity-top">
+              <h4 class="activity-title">${escapeHtml(item.domain)}</h4>
+              <span class="activity-timestamp">${escapeHtml(item.timestamp)}</span>
+            </div>
+            <div class="activity-meta">
+              <span><strong>Platform:</strong> ${escapeHtml(item.platform)}</span>
+              <span><strong>Mode:</strong> ${escapeHtml(wpText)}</span>
+              <span><strong>Type:</strong> ${escapeHtml(typeText)}</span>
+              <span><strong>Found:</strong> ${item.count} Jobs</span>
+            </div>
+            <div class="activity-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-sm-action" onclick="App.reRunSearchQuery('${escapeHtml(item.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+                <span>Re-run in Search Now</span>
+              </button>
+              <button class="btn-uncheck-action" onclick="App.deleteSearchHistoryItem('${escapeHtml(item.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
   }
 
@@ -1539,6 +1829,30 @@ const App = (() => {
     const btnSaveSettings = document.getElementById('btn-save-settings');
     const btnResetSettings = document.getElementById('btn-reset-settings');
     const btnPwaInstall = document.getElementById('btn-pwa-install');
+
+    // WhatsApp Share Mode (choose_recipient vs specific_number)
+    const currentShareMode = WhatsAppManager.getShareMode();
+    const radioChoose = document.getElementById('share-mode-choose');
+    const radioSpecific = document.getElementById('share-mode-specific');
+
+    if (radioChoose && radioSpecific) {
+      if (currentShareMode === 'specific_number') {
+        radioSpecific.checked = true;
+      } else {
+        radioChoose.checked = true;
+      }
+      updateShareModeUI();
+
+      document.querySelectorAll('input[name="wa-share-mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          WhatsAppManager.setShareMode(e.target.value);
+          updateShareModeUI();
+          showToast(e.target.value === 'choose_recipient'
+            ? 'Share Mode: Open WhatsApp, choose recipient'
+            : 'Share Mode: Send to specific number');
+        });
+      });
+    }
 
     if (inputPhone) inputPhone.value = WhatsAppManager.getPhoneNumber();
     if (inputTemplate) inputTemplate.value = WhatsAppManager.getTemplate();
@@ -1567,6 +1881,8 @@ const App = (() => {
 
     if (btnSaveSettings) {
       btnSaveSettings.addEventListener('click', () => {
+        const mode = document.querySelector('input[name="wa-share-mode"]:checked')?.value || 'choose_recipient';
+        WhatsAppManager.setShareMode(mode);
         if (inputPhone) WhatsAppManager.setPhoneNumber(inputPhone.value);
         if (inputTemplate) WhatsAppManager.setTemplate(inputTemplate.value);
         if (inputSignature) WhatsAppManager.setSignature(inputSignature.value);
@@ -1576,8 +1892,10 @@ const App = (() => {
 
     if (btnResetSettings) {
       btnResetSettings.addEventListener('click', () => {
-        if (confirm('Reset WhatsApp template and phone number to default settings?')) {
+        if (confirm('Reset WhatsApp template, share mode, and phone number to default settings?')) {
           WhatsAppManager.resetDefaults();
+          if (radioChoose) radioChoose.checked = true;
+          updateShareModeUI();
           if (inputPhone) inputPhone.value = WhatsAppManager.getPhoneNumber();
           if (inputTemplate) inputTemplate.value = WhatsAppManager.getTemplate();
           if (inputSignature) inputSignature.value = WhatsAppManager.getSignature();
@@ -1596,6 +1914,23 @@ const App = (() => {
     }
 
     updateLivePreview();
+  }
+
+  function updateShareModeUI() {
+    const isSpecific = document.getElementById('share-mode-specific')?.checked;
+    const optChoose = document.getElementById('share-mode-choose')?.closest('.share-mode-option');
+    const optSpecific = document.getElementById('share-mode-specific')?.closest('.share-mode-option');
+    const phoneWrap = document.getElementById('wrap-setting-wa-phone');
+
+    if (optChoose) {
+      optChoose.style.borderColor = !isSpecific ? 'var(--accent-blue)' : 'var(--border-color)';
+    }
+    if (optSpecific) {
+      optSpecific.style.borderColor = isSpecific ? 'var(--accent-blue)' : 'var(--border-color)';
+    }
+    if (phoneWrap) {
+      phoneWrap.style.opacity = isSpecific ? '1' : '0.6';
+    }
   }
 
   function updateLivePreview() {
@@ -2184,6 +2519,10 @@ const App = (() => {
     loadSearchHistoryBatch,
     deleteSearchHistoryItem,
     resetFilters,
+    renderScrapedJobs,
+    resetScrapedFilters,
+    reRunSearchQuery,
+    updateScrapedBadges,
     showToast,
     stopLiveSearch,
     NotificationManager,

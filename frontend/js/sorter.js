@@ -38,6 +38,44 @@ const JobSorter = (() => {
     return platform === 'indeed' || link.includes('indeed.com');
   }
 
+  function isRemotePlatformJob(job) {
+    if (!job) return false;
+    const p = (job.platform || '').toLowerCase();
+    return p.includes('remote') || p.includes('arbeitnow') || p.includes('weworkremotely');
+  }
+
+  /**
+   * Workplace Mode Detection Helpers (Remote vs On-site vs Hybrid)
+   */
+  function isRemoteJob(job) {
+    if (!job) return false;
+    if (job.workplace_type && job.workplace_type.toLowerCase() === 'remote') return true;
+    if (job.is_remote === true || job.is_remote === 'true') return true;
+    const text = ((job.title || '') + ' ' + (job.location || '') + ' ' + (job.description || '')).toLowerCase();
+    return /\b(remote|work from home|wfh|telecommute|virtual|anywhere)\b/i.test(text);
+  }
+
+  function isOnsiteJob(job) {
+    if (!job) return true;
+    if (job.workplace_type && (job.workplace_type.toLowerCase() === 'on-site' || job.workplace_type.toLowerCase() === 'onsite')) return true;
+    if (isRemoteJob(job)) return false;
+    return true;
+  }
+
+  function getWorkplaceType(job) {
+    if (!job) return 'On-site';
+    if (job.workplace_type) {
+      const wp = job.workplace_type.toLowerCase();
+      if (wp.includes('remote')) return 'Remote';
+      if (wp.includes('hybrid')) return 'Hybrid';
+      return 'On-site';
+    }
+    if (isRemoteJob(job)) return 'Remote';
+    const text = ((job.title || '') + ' ' + (job.location || '') + ' ' + (job.description || '')).toLowerCase();
+    if (/\bhybrid\b/i.test(text)) return 'Hybrid';
+    return 'On-site';
+  }
+
   /**
    * Defined Subcategories for all Engineering & IT Disciplines
    */
@@ -220,7 +258,8 @@ const JobSorter = (() => {
     query = '',
     category = 'all',
     platform = 'all',
-    jobType = 'all'
+    jobType = 'all',
+    workplace = 'all'
   } = {}) {
     if (!Array.isArray(jobs)) return [];
 
@@ -241,11 +280,19 @@ const JobSorter = (() => {
       // 1. Platform Filter
       if (platform === 'linkedin' && !isLinkedInJob(job)) return false;
       if (platform === 'indeed' && !isIndeedJob(job)) return false;
+      if (platform === 'remote' && !isRemotePlatformJob(job)) return false;
 
       // 2. Job Type Filter (Jobs vs Internships)
       const intern = isInternship(job);
       if (jobType === 'internship' && !intern) return false;
       if (jobType === 'job' && intern) return false;
+
+      // 2b. Workplace Filter (Remote vs On-site)
+      if (workplace && workplace !== 'all') {
+        const wp = getWorkplaceType(job).toLowerCase();
+        if (workplace === 'remote' && wp !== 'remote') return false;
+        if (workplace === 'onsite' && wp !== 'on-site' && wp !== 'hybrid') return false;
+      }
 
       // 3. Category Filter
       if (category && category !== 'all') {
@@ -373,7 +420,11 @@ const JobSorter = (() => {
     getCategoryStats,
     isInternship,
     isLinkedInJob,
-    isIndeedJob
+    isIndeedJob,
+    isRemotePlatformJob,
+    isRemoteJob,
+    isOnsiteJob,
+    getWorkplaceType
   };
 })();
 

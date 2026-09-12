@@ -7,6 +7,7 @@
 const WhatsAppManager = (() => {
   const STORAGE_KEYS = {
     PHONE_NUMBER: 'dominal_wa_number',
+    SHARE_MODE: 'dominal_wa_share_mode',
     TEMPLATE: 'dominal_wa_template',
     SIGNATURE: 'dominal_wa_signature',
     SENT_LOG: 'dominal_sent_log'
@@ -14,12 +15,14 @@ const WhatsAppManager = (() => {
 
   const DEFAULT_CONFIG = {
     phoneNumber: '918766882442',
+    shareMode: 'choose_recipient', // 'choose_recipient' (default, opens WhatsApp chat list) or 'specific_number'
     signature: 'Dominal Technology Jobs',
     template: `*Job Opening Update*
 
 Company: {company}
 Role: {job_title}
 Category: {job_type}
+Workplace: {workplace}
 Location: {location}
 Link: {job_link}
 
@@ -41,6 +44,27 @@ Shared via {signature}`
     const cleaned = (number || '').trim().replace(/[^0-9]/g, '');
     if (cleaned) {
       localStorage.setItem(STORAGE_KEYS.PHONE_NUMBER, cleaned);
+    }
+  }
+
+  /**
+   * Get WhatsApp share mode ('choose_recipient' or 'specific_number')
+   * Default: 'choose_recipient' (one-step direct sharing to group/chat list)
+   */
+  function getShareMode() {
+    const saved = localStorage.getItem(STORAGE_KEYS.SHARE_MODE);
+    if (saved === 'specific_number' || saved === 'choose_recipient') {
+      return saved;
+    }
+    return DEFAULT_CONFIG.shareMode;
+  }
+
+  /**
+   * Set WhatsApp share mode
+   */
+  function setShareMode(mode) {
+    if (mode === 'specific_number' || mode === 'choose_recipient') {
+      localStorage.setItem(STORAGE_KEYS.SHARE_MODE, mode);
     }
   }
 
@@ -83,6 +107,7 @@ Shared via {signature}`
    */
   function resetDefaults() {
     localStorage.removeItem(STORAGE_KEYS.PHONE_NUMBER);
+    localStorage.removeItem(STORAGE_KEYS.SHARE_MODE);
     localStorage.removeItem(STORAGE_KEYS.TEMPLATE);
     localStorage.removeItem(STORAGE_KEYS.SIGNATURE);
   }
@@ -96,12 +121,15 @@ Shared via {signature}`
     const template = customTemplate !== null ? customTemplate : getTemplate();
     const signature = customSignature !== null ? customSignature : getSignature();
 
+    const workplaceVal = (job.workplace_type || (typeof JobSorter !== 'undefined' ? JobSorter.getWorkplaceType(job) : '') || '').trim();
+
     // Mapping of placeholders to actual values
     const fieldMap = {
       '{company}': (job.company || '').trim(),
       '{job_title}': (job.title || '').trim(),
       '{location}': (job.location || '').trim(),
       '{job_type}': (job.job_type || job.subCategory || job.primaryCategory || '').trim(),
+      '{workplace}': workplaceVal,
       '{job_link}': (job.job_link || '').trim(),
       '{experience}': (job.experience || '').trim(),
       '{salary}': (job.salary || '').trim(),
@@ -141,12 +169,20 @@ Shared via {signature}`
 
   /**
    * Build wa.me sharing URL.
+   * Mode 1: "choose_recipient" (default) -> https://wa.me/?text=<encoded>
+   * Mode 2: "specific_number" -> https://wa.me/<number>?text=<encoded>
    */
   function buildShareUrl(job, customTemplate = null) {
-    const phone = getPhoneNumber();
+    const mode = getShareMode();
     const message = formatMessage(job, customTemplate);
     const encoded = encodeURIComponent(message);
-    return `https://wa.me/${phone}?text=${encoded}`;
+    if (mode === 'specific_number') {
+      const phone = getPhoneNumber();
+      return `https://wa.me/${phone}?text=${encoded}`;
+    } else {
+      // Direct recipient selection in WhatsApp (no specific number pre-filled)
+      return `https://wa.me/?text=${encoded}`;
+    }
   }
 
   /**
@@ -244,6 +280,8 @@ Shared via {signature}`
   return {
     getPhoneNumber,
     setPhoneNumber,
+    getShareMode,
+    setShareMode,
     getTemplate,
     setTemplate,
     getSignature,
@@ -260,3 +298,10 @@ Shared via {signature}`
     DEFAULT_CONFIG
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.WhatsAppManager = WhatsAppManager;
+}
+if (typeof module !== 'undefined') {
+  module.exports = WhatsAppManager;
+}

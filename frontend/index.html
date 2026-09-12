@@ -285,6 +285,13 @@
       <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
       <polyline points="9 11 12 14 20 6"></polyline>
     </symbol>
+    <!-- WiFi / Remote Indicator -->
+    <symbol id="icon-wifi" viewBox="0 0 24 24">
+      <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+      <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+      <line x1="12" y1="20" x2="12.01" y2="20"></line>
+    </symbol>
   </svg>
 
   <!-- ==========================================================================
@@ -372,6 +379,11 @@
       <button class="drawer-link active" data-view="home">
         <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-home"></use></svg>
         <span>Home / Feed</span>
+      </button>
+
+      <button class="drawer-link" data-view="scraped">
+        <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+        <span>Scraped Jobs Archive</span>
       </button>
 
       <button class="drawer-link" data-view="search-now">
@@ -475,18 +487,35 @@
           <button class="filter-pill" data-filter="other">Other</button>
         </div>
 
-        <!-- Secondary Specific Filters: Platform & Job Type -->
+        <!-- Secondary Specific Filters: Platform, Workplace, Job Type & Status -->
         <div class="secondary-filter-bar">
           <div class="sub-filter-group" aria-label="Platform Filter">
             <span class="sub-filter-label">Source:</span>
             <button class="sub-pill active" id="pill-platform-all" data-platform="all">All</button>
             <button class="sub-pill" id="pill-platform-linkedin" data-platform="linkedin">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
-              <span>LinkedIn Only</span>
+              <span>LinkedIn</span>
             </button>
             <button class="sub-pill" id="pill-platform-indeed" data-platform="indeed">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-globe"></use></svg>
               <span>Indeed</span>
+            </button>
+            <button class="sub-pill" id="pill-platform-remote" data-platform="remote">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+              <span>Remote APIs</span>
+            </button>
+          </div>
+
+          <div class="sub-filter-group" aria-label="Workplace Filter">
+            <span class="sub-filter-label">Mode:</span>
+            <button class="sub-pill active" id="pill-workplace-all" data-workplace="all">All Modes</button>
+            <button class="sub-pill" id="pill-workplace-remote" data-workplace="remote">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-wifi"></use></svg>
+              <span>Remote</span>
+            </button>
+            <button class="sub-pill" id="pill-workplace-onsite" data-workplace="onsite">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-building"></use></svg>
+              <span>On-Site</span>
             </button>
           </div>
 
@@ -515,6 +544,87 @@
 
       <!-- Feed Cards Container -->
       <div class="job-feed-list" id="job-feed-list">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- VIEW: SCRAPED JOBS ARCHIVE -->
+    <section class="view-section" id="view-scraped">
+      <div class="scraped-header-actions" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div class="section-header" style="margin-bottom: 0;">
+          <h2>Scraped Jobs Archive</h2>
+          <p>Every opening scraped across LinkedIn, Indeed, RemoteOK, Remotive, Arbeitnow, and WeWorkRemotely feeds.</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div class="scraped-stats-pill" id="scraped-total-stats-pill" style="display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent-blue-light); color: var(--accent-blue); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 800; border: 1px solid rgba(10,42,94,0.15);">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+            <span id="txt-scraped-total-badge">0 Scraped Openings</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scraped Filtering Controls -->
+      <div class="filter-container" style="margin-bottom: 16px;">
+        <div class="search-bar-wrap" style="margin-bottom: 12px;">
+          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-search"></use></svg>
+          <input type="text" id="input-scraped-search" placeholder="Search across all scraped jobs (title, company, keywords)..." autocomplete="off">
+          <button class="btn-clear-search" id="btn-clear-scraped-search" aria-label="Clear Search">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+
+        <!-- Category Pills for Scraped Jobs -->
+        <div class="filter-pills-row" id="scraped-category-pills" style="margin-bottom: 12px;">
+          <button class="filter-pill active" data-scraped-cat="all">All Fields</button>
+          <button class="filter-pill" data-scraped-cat="it">IT & Tech</button>
+          <button class="filter-pill" data-scraped-cat="non-it">Non-IT</button>
+          <button class="filter-pill" data-scraped-cat="civil">Civil</button>
+          <button class="filter-pill" data-scraped-cat="entc">ENTC</button>
+          <button class="filter-pill" data-scraped-cat="mechanical">Mechanical</button>
+          <button class="filter-pill" data-scraped-cat="electrical">Electrical</button>
+          <button class="filter-pill" data-scraped-cat="sales">Sales</button>
+          <button class="filter-pill" data-scraped-cat="data">Data Science</button>
+          <button class="filter-pill" data-scraped-cat="devops">DevOps</button>
+        </div>
+
+        <!-- Secondary Filters Row for Scraped Jobs -->
+        <div class="secondary-filter-bar">
+          <div class="sub-filter-group" aria-label="Workplace Filter">
+            <span class="sub-filter-label">Mode:</span>
+            <button class="sub-pill active" data-scraped-workplace="all">All Modes</button>
+            <button class="sub-pill" data-scraped-workplace="remote">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-wifi"></use></svg>
+              <span>Remote</span>
+            </button>
+            <button class="sub-pill" data-scraped-workplace="onsite">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-building"></use></svg>
+              <span>On-Site</span>
+            </button>
+          </div>
+
+          <div class="sub-filter-group" aria-label="Platform Filter">
+            <span class="sub-filter-label">Source:</span>
+            <button class="sub-pill active" data-scraped-platform="all">All</button>
+            <button class="sub-pill" data-scraped-platform="linkedin">LinkedIn</button>
+            <button class="sub-pill" data-scraped-platform="indeed">Indeed</button>
+            <button class="sub-pill" data-scraped-platform="remote">Remote APIs</button>
+          </div>
+
+          <div class="sub-filter-group" aria-label="Status Filter">
+            <span class="sub-filter-label">Status:</span>
+            <button class="sub-pill active" data-scraped-status="all" title="Fresh jobs first, ticked jobs below">All (Fresh First)</button>
+            <button class="sub-pill" data-scraped-status="fresh" title="Only un-ticked jobs">Fresh Only</button>
+            <button class="sub-pill" data-scraped-status="checked" title="Only ticked jobs">Checked Only</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="feed-summary-bar">
+        <span class="feed-count-text" id="scraped-feed-count-display">Loading Scraped Archive...</span>
+      </div>
+
+      <!-- Scraped Cards Container -->
+      <div class="job-feed-list" id="scraped-jobs-list">
         <!-- Rendered dynamically by app.js -->
       </div>
     </section>
@@ -627,6 +737,19 @@
           </div>
         </div>
 
+        <!-- 5. Workplace Mode (Remote vs On-site) -->
+        <div class="search-now-step">
+          <label class="step-label">
+            <span class="step-number">5</span>
+            <span>Workplace Mode</span>
+          </label>
+          <div class="count-pill-selector search-workplace-pill-selector">
+            <button type="button" class="search-workplace-pill active" data-workplace="all">All Modes</button>
+            <button type="button" class="search-workplace-pill" data-workplace="remote">Remote Only</button>
+            <button type="button" class="search-workplace-pill" data-workplace="onsite">On-Site Only</button>
+          </div>
+        </div>
+
         <!-- Search Action Buttons -->
         <div class="search-actions-row">
           <button class="btn-execute-search" id="btn-execute-search" type="button">
@@ -645,8 +768,8 @@
         <div class="progress-radar-spinner">
           <svg class="svg-icon svg-icon-lg pulse-anim" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
         </div>
-        <h4 id="progress-status-title">Querying Platform...</h4>
-        <p id="progress-status-detail">Connecting to platform and scraping matching domain listings...</p>
+        <h4 id="progress-status-title">Querying Multi-Source Feeds...</h4>
+        <p id="progress-status-detail">Scanning JobSpy, Remotive, RemoteOK, Arbeitnow & WeWorkRemotely...</p>
         <div class="progress-bar-track">
           <div class="progress-bar-fill" id="progress-bar-fill"></div>
         </div>
@@ -663,23 +786,6 @@
           <span class="results-badge" id="search-results-count-badge">0 Found</span>
         </div>
         <div class="job-feed-list" id="search-results-list">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
-      <!-- Search History Section -->
-      <div class="search-history-section">
-        <div class="section-header-compact">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-history"></use></svg>
-            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--accent-blue);">Search History</h3>
-          </div>
-          <button class="btn-sm-action" id="btn-clear-search-history" type="button">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
-            <span>Clear History</span>
-          </button>
-        </div>
-        <div id="search-history-list" class="search-history-list">
           <!-- Populated dynamically -->
         </div>
       </div>
@@ -751,7 +857,7 @@
         </div>
       </div>
 
-      <!-- History Navigation Tabs: Checked vs All Historical Fetched -->
+      <!-- History Navigation Tabs: Checked vs All Historical Scraped vs Search Queries -->
       <div class="history-tabs-row" style="display: flex; gap: 10px; margin: 14px 0 16px; flex-wrap: wrap;">
         <button class="sub-pill active" id="tab-history-checked" onclick="App.switchHistoryTab('checked')">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
@@ -759,7 +865,11 @@
         </button>
         <button class="sub-pill" id="tab-history-archive" onclick="App.switchHistoryTab('archive')">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
-          <span id="txt-history-archive-count">All Fetched Archive (0)</span>
+          <span id="txt-history-archive-count">All Scraped Archive (0)</span>
+        </button>
+        <button class="sub-pill" id="tab-history-queries" onclick="App.switchHistoryTab('queries')">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+          <span id="txt-history-queries-count">Search Queries (0)</span>
         </button>
       </div>
 
@@ -832,16 +942,41 @@
       <div class="settings-group">
         <div class="settings-group-title">
           <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-share"></use></svg>
-          <span>WhatsApp Share Destination</span>
+          <span>WhatsApp Sharing & Dispatch</span>
         </div>
         <p class="settings-group-desc">
-          Clicking "WhatsApp" pre-fills this number with your customized template. You then manually forward the message to the Dominal Technology Jobs group.
+          Configure how clicking "WhatsApp" opens on your device — directly into your chat/group list or to a pre-filled destination number.
         </p>
 
-        <div class="form-field">
-          <label class="form-label" for="setting-wa-phone">WhatsApp Number (with Country Code)</label>
+        <!-- WhatsApp Share Mode Option Toggle -->
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label class="form-label">WhatsApp Share Mode</label>
+          <div class="share-mode-toggle-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+            <label class="share-mode-option" style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1.5px solid var(--accent-blue); border-radius: var(--radius-sm); cursor: pointer; background: #ffffff;">
+              <input type="radio" name="wa-share-mode" id="share-mode-choose" value="choose_recipient" checked style="margin-top: 3px;">
+              <div>
+                <strong style="display: block; font-size: 0.88rem; color: var(--accent-blue);">Open WhatsApp, choose recipient (Default & Recommended)</strong>
+                <span style="font-size: 0.78rem; color: var(--text-light); display: block; margin-top: 2px;">
+                  Directly opens WhatsApp to your chat/group selector so you can pick any contact or group (e.g. "Dominal Technology Jobs") in 1 step without forwarding.
+                </span>
+              </div>
+            </label>
+            <label class="share-mode-option" style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer; background: #ffffff;">
+              <input type="radio" name="wa-share-mode" id="share-mode-specific" value="specific_number" style="margin-top: 3px;">
+              <div>
+                <strong style="display: block; font-size: 0.88rem; color: var(--text-color);">Send to specific number</strong>
+                <span style="font-size: 0.78rem; color: var(--text-light); display: block; margin-top: 2px;">
+                  Opens WhatsApp with the pre-filled target number configured below.
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-field" id="wrap-setting-wa-phone">
+          <label class="form-label" for="setting-wa-phone">WhatsApp Target Number (with Country Code)</label>
           <input type="text" id="setting-wa-phone" class="form-input" placeholder="918766882442" value="918766882442">
-          <span style="font-size: 0.74rem; color: var(--text-light); margin-top: 4px; display: block;">Default configured destination: 918766882442</span>
+          <span style="font-size: 0.74rem; color: var(--text-light); margin-top: 4px; display: block;">Used when "Send to specific number" is selected. Default: 918766882442</span>
         </div>
 
         <div class="form-field">
@@ -858,6 +993,7 @@
             <span class="token-badge" data-token="{company}">+ {company}</span>
             <span class="token-badge" data-token="{job_title}">+ {job_title}</span>
             <span class="token-badge" data-token="{location}">+ {location}</span>
+            <span class="token-badge" data-token="{workplace}">+ {workplace}</span>
             <span class="token-badge" data-token="{job_type}">+ {job_type}</span>
             <span class="token-badge" data-token="{job_link}">+ {job_link}</span>
             <span class="token-badge" data-token="{signature}">+ {signature}</span>
@@ -898,14 +1034,15 @@
       <span class="taskbar-label">Feed</span>
     </button>
 
-    <button class="taskbar-item" data-view="search-now" aria-label="Search Now">
-      <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
-      <span class="taskbar-label">Search Now</span>
+    <button class="taskbar-item" data-view="scraped" aria-label="Scraped Jobs">
+      <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
+      <span class="taskbar-label">Scraped</span>
+      <span class="taskbar-badge" id="taskbar-scraped-badge" style="display: none;">0</span>
     </button>
 
-    <button class="taskbar-item" data-view="categories" aria-label="Categories">
-      <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-grid"></use></svg>
-      <span class="taskbar-label">Categories</span>
+    <button class="taskbar-item" data-view="search-now" aria-label="Search Now">
+      <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-radar"></use></svg>
+      <span class="taskbar-label">Search</span>
     </button>
 
     <button class="taskbar-item" data-view="activity" aria-label="History & Checked">
