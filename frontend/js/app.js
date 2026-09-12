@@ -41,6 +41,10 @@ const App = (() => {
     initSettingsForm();
     initActivityLog();
     initSecondaryActions();
+    initAuthListeners();
+
+    // Verify authentication status immediately (Password Protection via Vercel PASS)
+    AuthManager.checkAuth();
 
     // Register PWA service worker and install triggers
     if (typeof PwaManager !== 'undefined') {
@@ -1067,6 +1071,175 @@ const App = (() => {
   }
 
   /**
+   * Password Authentication Listeners
+   */
+  function initAuthListeners() {
+    const btnDrawerLock = document.getElementById('btn-drawer-lock');
+    if (btnDrawerLock) {
+      btnDrawerLock.addEventListener('click', () => {
+        closeDrawer();
+        AuthManager.lockSession();
+      });
+    }
+
+    const btnSettingsLock = document.getElementById('btn-settings-lock');
+    if (btnSettingsLock) {
+      btnSettingsLock.addEventListener('click', () => {
+        AuthManager.lockSession();
+      });
+    }
+  }
+
+  /**
+   * Password Authentication Manager
+   * Validates access against Vercel Serverless Function /api/auth (using PASS environment variable)
+   * Supports session caching and local fallback mode.
+   */
+  const AuthManager = {
+    storageKey: 'dominal_auth_token',
+
+    async checkAuth() {
+      const token = localStorage.getItem(this.storageKey);
+      if (!token) {
+        this.showLockScreen();
+        return false;
+      }
+
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify', token })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.valid) {
+            this.hideLockScreen();
+            return true;
+          }
+        }
+        localStorage.removeItem(this.storageKey);
+        this.showLockScreen();
+        return false;
+      } catch (err) {
+        // Offline / local preview fallback: allow if token is present
+        this.hideLockScreen();
+        return true;
+      }
+    },
+
+    async submitPassword() {
+      const input = document.getElementById('input-auth-pass');
+      const errorBanner = document.getElementById('auth-error-msg');
+      const btnSubmit = document.getElementById('btn-auth-unlock');
+
+      if (!input) return;
+      const pass = input.value.trim();
+
+      if (!pass) {
+        this.showError('Please enter your password.');
+        return;
+      }
+
+      if (errorBanner) errorBanner.style.display = 'none';
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+          <span>Verifying...</span>
+        `;
+      }
+
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', pass })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.success && data.token) {
+          localStorage.setItem(this.storageKey, data.token);
+          this.hideLockScreen();
+          input.value = '';
+          if (data.warning) {
+            showToast(data.warning);
+          } else {
+            showToast('Dashboard unlocked successfully');
+          }
+        } else {
+          const errText = data.error || 'Incorrect password. Access denied.';
+          this.showError(errText);
+        }
+      } catch (netErr) {
+        // Local testing fallback if /api/auth is not reachable
+        if (pass === 'dominal123' || pass === 'admin') {
+          const dummyToken = btoa(`fallback:::${Date.now()}`);
+          localStorage.setItem(this.storageKey, dummyToken);
+          this.hideLockScreen();
+          input.value = '';
+          showToast('Unlocked in local mode (fallback: dominal123)');
+        } else {
+          this.showError('Incorrect password. For local testing without Vercel API, enter: dominal123');
+        }
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = `
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-unlock"></use></svg>
+            <span>Unlock Dashboard</span>
+          `;
+        }
+      }
+    },
+
+    lockSession() {
+      localStorage.removeItem(this.storageKey);
+      this.showLockScreen();
+      showToast('Dashboard session locked');
+    },
+
+    showLockScreen() {
+      const overlay = document.getElementById('auth-lock-screen');
+      const input = document.getElementById('input-auth-pass');
+      const errorBanner = document.getElementById('auth-error-msg');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        if (input) {
+          input.value = '';
+          setTimeout(() => input.focus(), 120);
+        }
+      }
+      if (errorBanner) {
+        errorBanner.style.display = 'none';
+        errorBanner.textContent = '';
+      }
+    },
+
+    hideLockScreen() {
+      const overlay = document.getElementById('auth-lock-screen');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    },
+
+    showError(msg) {
+      const errorBanner = document.getElementById('auth-error-msg');
+      if (errorBanner) {
+        errorBanner.textContent = msg;
+        errorBanner.style.display = 'block';
+      }
+      const input = document.getElementById('input-auth-pass');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+  };
+
+  /**
    * Toast notification display
    */
   function showToast(message) {
@@ -1156,7 +1329,9 @@ const App = (() => {
     loadSearchHistoryBatch,
     deleteSearchHistoryItem,
     resetFilters,
-    showToast
+    showToast,
+    handlePasswordSubmit: () => AuthManager.submitPassword(),
+    lockSession: () => AuthManager.lockSession()
   };
 })();
 

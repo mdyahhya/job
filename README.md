@@ -51,12 +51,27 @@ Built with **plain HTML, CSS, and Vanilla JavaScript only** — no React, no ext
 
 ---
 
+### 6. Live Search Now Multi-Platform Scraper
+- Direct targeted job search targeting LinkedIn, Indeed, and Glassdoor with custom or pre-set domains.
+- Dual action buttons: 1-click **WhatsApp** message generation and **LinkedIn** direct launch (opens directly in LinkedIn native app on mobile) or **Website** (in new tab).
+- Search history caching in localStorage.
+
+### 7. Password Protection (Vercel Serverless Function & PASS Environment Variable)
+- Built-in authentication via `/api/auth` reading the `PASS` environment variable on Vercel.
+- Protects the dashboard from unauthorized access.
+- Supports 30-day session caching in `localStorage`.
+- Immediate lock session buttons in top navigation drawer and Settings.
+
+---
+
 ## File Structure
 
 ```
 ├── .github/
 │   └── workflows/
 │       └── scrape.yml             # GitHub Actions workflow running every 2 hours
+├── api/
+│   └── auth.js                    # Vercel Serverless Function for PASS authentication
 ├── frontend/
 │   ├── index.html                 # Main application shell and views
 │   ├── manifest.json              # PWA manifest
@@ -64,7 +79,7 @@ Built with **plain HTML, CSS, and Vanilla JavaScript only** — no React, no ext
 │   ├── css/
 │   │   └── styles.css             # 70/30 White-Blue design system
 │   ├── js/
-│   │   ├── app.js                 # App controller & SPA router
+│   │   ├── app.js                 # App controller, AuthManager & SPA router
 │   │   ├── sorter.js              # Rule-based categorization engine
 │   │   ├── whatsapp.js            # WhatsApp link builder & sent logger
 │   │   └── sw-register.js         # Service Worker & PWA install manager
@@ -78,9 +93,26 @@ Built with **plain HTML, CSS, and Vanilla JavaScript only** — no React, no ext
 ├── scraper/
 │   ├── scraper.py                 # JobSpy scraping script
 │   └── requirements.txt           # Python scraper dependencies
+├── index.html                     # Root redirect fallback
+├── vercel.json                    # Vercel rewrites routing / to /frontend/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## Vercel Deployment & Setup
+
+1. Connect this GitHub repository (`mdyahhya/job`) to Vercel.
+2. In your Vercel Project Dashboard:
+   - Go to **Settings** > **Environment Variables**.
+   - Add a new variable:
+     - **Key**: `PASS`
+     - **Value**: `<your_desired_password>` (e.g. `MySecurePass2026`)
+     - Click **Save**.
+3. Deploy / Redeploy.
+4. Open your live site URL (e.g. `https://jobscraperyahya.vercel.app`).
+5. Enter your password to unlock the dashboard!
 
 ---
 
@@ -90,19 +122,14 @@ You can run the frontend with any local HTTP server:
 
 ```bash
 # Using Python
-cd frontend
 python -m http.server 8080
 ```
 
-Open `http://localhost:8080` in your web browser.
+Open `http://localhost:8080` in your web browser. (In local mode without Vercel Serverless functions, use fallback password: `dominal123`).
 
 ---
 
-## GitHub Deployment
+## GitHub Repository
 
-To deploy this repository to GitHub:
-```bash
-git remote add origin https://github.com/mdyahhya/job.git
-git branch -M main
-git push -u origin main
-```
+Active repository: `https://github.com/mdyahhya/job.git`
+Branch: `main`
