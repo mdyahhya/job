@@ -1092,40 +1092,26 @@ const App = (() => {
   /**
    * Password Authentication Manager
    * Validates access against Vercel Serverless Function /api/auth (using PASS environment variable)
-   * Supports session caching and local fallback mode.
+   * Saves password in localStorage so refreshes do NOT ask for password.
+   * Only asks for password when logged out.
    */
   const AuthManager = {
-    storageKey: 'dominal_auth_token',
+    passKey: 'dominal_auth_pass',
+    sessionKey: 'dominal_auth_session',
 
-    async checkAuth() {
-      const token = localStorage.getItem(this.storageKey);
-      if (!token) {
-        this.showLockScreen();
-        return false;
-      }
+    checkAuth() {
+      const savedPass = localStorage.getItem(this.passKey);
+      const isSessionActive = localStorage.getItem(this.sessionKey) === 'active';
 
-      try {
-        const response = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'verify', token })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.valid) {
-            this.hideLockScreen();
-            return true;
-          }
-        }
-        localStorage.removeItem(this.storageKey);
-        this.showLockScreen();
-        return false;
-      } catch (err) {
-        // Offline / local preview fallback: allow if token is present
+      // If user has already entered the password and logged in, keep dashboard unlocked
+      if (savedPass || isSessionActive) {
         this.hideLockScreen();
         return true;
       }
+
+      // If not logged in, show lock screen asking for password
+      this.showLockScreen();
+      return false;
     },
 
     async submitPassword() {
@@ -1159,8 +1145,13 @@ const App = (() => {
 
         const data = await response.json().catch(() => ({}));
 
-        if (response.ok && data.success && data.token) {
-          localStorage.setItem(this.storageKey, data.token);
+        if (response.ok && data.success) {
+          // Save password and active session state in localStorage as requested
+          localStorage.setItem(this.passKey, pass);
+          localStorage.setItem(this.sessionKey, 'active');
+          if (data.token) {
+            localStorage.setItem('dominal_auth_token', data.token);
+          }
           this.hideLockScreen();
           input.value = '';
           if (data.warning) {
@@ -1173,10 +1164,10 @@ const App = (() => {
           this.showError(errText);
         }
       } catch (netErr) {
-        // Local testing fallback if /api/auth is not reachable
+        // Local testing fallback if /api/auth is not reachable (e.g. static server)
         if (pass === 'dominal123' || pass === 'admin') {
-          const dummyToken = btoa(`fallback:::${Date.now()}`);
-          localStorage.setItem(this.storageKey, dummyToken);
+          localStorage.setItem(this.passKey, pass);
+          localStorage.setItem(this.sessionKey, 'active');
           this.hideLockScreen();
           input.value = '';
           showToast('Unlocked in local mode (fallback: dominal123)');
@@ -1195,9 +1186,12 @@ const App = (() => {
     },
 
     lockSession() {
-      localStorage.removeItem(this.storageKey);
+      // Clear password and session from localStorage only when user explicitly logs out
+      localStorage.removeItem(this.passKey);
+      localStorage.removeItem(this.sessionKey);
+      localStorage.removeItem('dominal_auth_token');
       this.showLockScreen();
-      showToast('Dashboard session locked');
+      showToast('Logged out. Dashboard session locked.');
     },
 
     showLockScreen() {
