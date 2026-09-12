@@ -102,7 +102,7 @@ Open `http://localhost:8080` in your web browser.
 
 To deploy this repository to GitHub:
 ```bash
-git remote add origin https://github.com/dominaltech/job.git
+git remote add origin https://github.com/mdyahhya/job.git
 git branch -M main
 git push -u origin main
 ```
