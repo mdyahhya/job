@@ -1,6 +1,6 @@
 [
   {
-    "id": "job-07fd3024",
+    "id": "job-b64d9647",
     "title": "Auth0 Developer",
     "company": "nan",
     "location": "Remote, IN",
@@ -14,7 +14,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-34a37d47",
+    "id": "job-ee31cecd",
     "title": "IT Cell",
     "company": "nan",
     "location": "BR, IN",
@@ -28,7 +28,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-210134ed",
+    "id": "job-ba1f02e2",
     "title": "Software Developer Intern",
     "company": "nan",
     "location": "DL, IN",
@@ -42,7 +42,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-18d92197",
+    "id": "job-0063b00d",
     "title": "Freelance Biostatistician",
     "company": "QREC Clinical Research LLP",
     "location": "Remote, IN",
@@ -56,7 +56,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-04fbca59",
+    "id": "job-b5cc660b",
     "title": "HTML Developer AI ML",
     "company": "Oh! Puhleeez Digital Marketing Solutions",
     "location": "DL, IN",
@@ -70,7 +70,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-7058f052",
+    "id": "job-092f5a9b",
     "title": "Freelance Software Developer",
     "company": "Welcon Financials Pvt Ltd- Jorhat",
     "location": "WB, IN",
@@ -84,35 +84,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-d676beb3",
-    "title": "ai internship in rayagraj",
-    "company": "Perform Digital",
-    "location": "UP, IN",
-    "job_type": "Internship",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "Job Title: Founding AI \\& Automation Intern (Tech \\+ Sales)**Company:** Perform Digital **Location:** Prayagraj, Uttar Pradesh (In\\-Office / Full\\-Time) **Employment Type:** Internship (with a performance\\-based PPO opportunity)**About Perform Digital**At Perform Digital, we b...",
-    "job_link": "https://in.indeed.com/viewjob?jk=1e0cc210c13e6bb3",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-b3126657",
-    "title": "AI Developer",
-    "company": "TechnoKraft Training and Solutions Pvt Ltd",
-    "location": "MH, IN",
-    "job_type": "Internship",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "Job Title: AI Developer Job Type: Full\\-Time / Internship Job Location: Mumbai/Nashik, Maharashtra Work Experience: 0 - 1 Year / Freshers Department: Artificial Intelligence \\& Technology Openings: As per requirement JOB DESCRIPTION About the Role We are looking for enthusiast...",
-    "job_link": "https://in.indeed.com/viewjob?jk=facce599e4e4f2a4",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-25a21746",
+    "id": "job-fe1932b6",
     "title": "Software Developer",
     "company": "Akasa Clean Energy Pvt Ltd",
     "location": "UP, IN",
@@ -126,21 +98,35 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-767afb12",
-    "title": "Junior Front-end Developer",
-    "company": "Viseven",
-    "location": "TN, IN",
-    "job_type": "Full-time",
-    "workplace_type": "Remote",
+    "id": "job-3e6069ce",
+    "title": "ai internship in rayagraj",
+    "company": "Perform Digital",
+    "location": "UP, IN",
+    "job_type": "Internship",
+    "workplace_type": "On-site",
     "experience": "Verified Opening",
     "salary": "Competitive",
     "posted_date": "Recently",
-    "description": "**Viseven Group** is a leading global B2B MarTech service provider, empowering Pharma and LifeScience companies since 2009\\. Our mission is to drive digital transformation and excellence, offering comprehensive end\\-to\\-end software and digital marketing services tailored to t...",
-    "job_link": "https://in.indeed.com/viewjob?jk=98c17af503eeea92",
+    "description": "Job Title: Founding AI \\& Automation Intern (Tech \\+ Sales)**Company:** Perform Digital **Location:** Prayagraj, Uttar Pradesh (In\\-Office / Full\\-Time) **Employment Type:** Internship (with a performance\\-based PPO opportunity)**About Perform Digital**At Perform Digital, we b...",
+    "job_link": "https://in.indeed.com/viewjob?jk=1e0cc210c13e6bb3",
     "platform": "Indeed"
   },
   {
-    "id": "job-db08166a",
+    "id": "job-7682291c",
+    "title": "AI Developer",
+    "company": "TechnoKraft Training and Solutions Pvt Ltd",
+    "location": "MH, IN",
+    "job_type": "Internship",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "Job Title: AI Developer Job Type: Full\\-Time / Internship Job Location: Mumbai/Nashik, Maharashtra Work Experience: 0 - 1 Year / Freshers Department: Artificial Intelligence \\& Technology Openings: As per requirement JOB DESCRIPTION About the Role We are looking for enthusiast...",
+    "job_link": "https://in.indeed.com/viewjob?jk=facce599e4e4f2a4",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-27f74ea2",
     "title": "MIS Executive -Logistic",
     "company": "Shankh Trading Pvt Ltd",
     "location": "UP, IN",
@@ -154,7 +140,21 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-599b6418",
+    "id": "job-9bf51644",
+    "title": "Junior Front-end Developer",
+    "company": "Viseven",
+    "location": "TN, IN",
+    "job_type": "Full-time",
+    "workplace_type": "Remote",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "**Viseven Group** is a leading global B2B MarTech service provider, empowering Pharma and LifeScience companies since 2009\\. Our mission is to drive digital transformation and excellence, offering comprehensive end\\-to\\-end software and digital marketing services tailored to t...",
+    "job_link": "https://in.indeed.com/viewjob?jk=98c17af503eeea92",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-84b3260c",
     "title": "Software Engr I",
     "company": "Honeywell",
     "location": "TS, IN",
@@ -168,7 +168,21 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-3c05bb11",
+    "id": "job-faf9993e",
+    "title": "Senior Backend Software Engineer - Cloud & DevOps",
+    "company": "WirelessCar AB",
+    "location": "KA, IN",
+    "job_type": "Full-time",
+    "workplace_type": "Remote",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "**WirelessCar - s Journey** WirelessCar drives the future of mobility by connecting vehicles and developing cutting\\-edge digital services. We help leading brands - like Volkswagen, Volvo, and Jaguar Land Rover - innovate, enhance mobility, and accelerate their digital transfo...",
+    "job_link": "https://in.indeed.com/viewjob?jk=7789a022c4473a51",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-e62a18a7",
     "title": "QA Intern",
     "company": "App Knit",
     "location": "CH, IN",
@@ -182,7 +196,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-f4339d21",
+    "id": "job-abeadfd8",
     "title": "Software Engineering / IT Ops SME",
     "company": "nan",
     "location": "Remote, IN",
@@ -196,7 +210,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-acad818a",
+    "id": "job-375e90a1",
     "title": "Desktop support Engineer L2",
     "company": "nan",
     "location": "KA, IN",
@@ -210,7 +224,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-8a23c15d",
+    "id": "job-85bd63d5",
     "title": "Agentic AI",
     "company": "WePitch",
     "location": "RJ, IN",
@@ -224,21 +238,21 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-21e2f571",
-    "title": "Data Engineer",
-    "company": "NatWest Group",
-    "location": "HR, IN",
+    "id": "job-2fb685c6",
+    "title": "Junior Backend Software Engineer",
+    "company": "WirelessCar AB",
+    "location": "KA, IN",
     "job_type": "Full-time",
-    "workplace_type": "On-site",
+    "workplace_type": "Remote",
     "experience": "Verified Opening",
     "salary": "Competitive",
     "posted_date": "Recently",
-    "description": "Closing date for applications: 17/09/2026 Location Gurugram, India Job typePermanent \\| Contract typeFull Time \\#R\\-00284774 **Join our digital revolution in NatWest Digital X** ---------------------------------------------------- In everything we do, we work to one aim. To ma...",
-    "job_link": "https://in.indeed.com/viewjob?jk=88d27b947e92f170",
+    "description": "**WirelessCar - s Journey** WirelessCar drives the future of mobility by connecting vehicles and developing cutting\\-edge digital services. We help leading brands - like Volkswagen, Volvo, and Jaguar Land Rover - innovate, enhance mobility, and accelerate their digital transfo...",
+    "job_link": "https://in.indeed.com/viewjob?jk=5ca0552f60a19ac8",
     "platform": "Indeed"
   },
   {
-    "id": "job-ed4d8e49",
+    "id": "job-2f5ee59d",
     "title": "ECU Test Engineer",
     "company": "Redlinux Technosolutions Private Limited",
     "location": "Remote, IN",
@@ -252,7 +266,21 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-efe215d7",
+    "id": "job-fd4a412e",
+    "title": "Data Engineer",
+    "company": "NatWest Group",
+    "location": "HR, IN",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "Closing date for applications: 17/09/2026 Location Gurugram, India Job typePermanent \\| Contract typeFull Time \\#R\\-00284774 **Join our digital revolution in NatWest Digital X** ---------------------------------------------------- In everything we do, we work to one aim. To ma...",
+    "job_link": "https://in.indeed.com/viewjob?jk=88d27b947e92f170",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-396cde2c",
     "title": "Rebar Detailer (WFH)",
     "company": "Fabrich Engineering",
     "location": "Remote, IN",
@@ -266,7 +294,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-53895d3b",
+    "id": "job-b4e972c3",
     "title": "Python Fast API Developer",
     "company": "Gramener",
     "location": "KA, IN",
@@ -280,7 +308,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-52752398",
+    "id": "job-cf66bfdf",
     "title": "Computer Engineer (IT Infrastructure)",
     "company": "Ducem Technologies Private Limited",
     "location": "GJ, IN",
@@ -294,7 +322,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-72a8e925",
+    "id": "job-c8d4485b",
     "title": "Data Science Specialist",
     "company": "BT Group",
     "location": "HR, IN",
@@ -308,7 +336,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-aca8dec9",
+    "id": "job-0edaaa52",
     "title": "Software Engineering Intern (New Grad Hiring 2026)",
     "company": "Terralogic",
     "location": "KA, IN",
@@ -322,7 +350,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-36a4d2f4",
+    "id": "job-a439bca0",
     "title": "Junior QA Engineer",
     "company": "nan",
     "location": "GJ, IN",
@@ -336,7 +364,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-98848498",
+    "id": "job-99c77e78",
     "title": "Frontend Developer",
     "company": "Dassault Syst - mes",
     "location": "MH, IN",
@@ -350,35 +378,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-0237503f",
-    "title": "Software Trainee",
-    "company": "Vantiva",
-    "location": "TN, IN",
-    "job_type": "Internship",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "**About Vantiva** **Pushing the Edge** **Vantiva (Euronext Paris: VANTI)** is a global technology leader in connectivity technologies. For over 130 years, we have delivered solutions that connect what matters most. Today, we continue to redefine connectivity with industry\\-lea...",
-    "job_link": "https://in.indeed.com/viewjob?jk=22bf1926f7b18b6b",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-bc07aca6",
-    "title": "Mid-Level Developer - AI-Enabled Systems (Remote, India)",
-    "company": "Best Access Doors",
-    "location": "KA, IN",
-    "job_type": "Full-time",
-    "workplace_type": "Remote",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "**Mid\\-Level Developer - AI\\-Enabled Systems (Remote, Global)** **Reports To:** Development Team Lead **The Culture:** We are building a data\\-driven, AI\\-empowered, Top 10 Best Workplace that values Integrity, Accountability, People and Innovation. At Best Access Doors, AI is...",
-    "job_link": "https://in.indeed.com/viewjob?jk=0dba92a64cfd834c",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-8f9f2b5d",
+    "id": "job-9d387869",
     "title": "Apprentice - Software Engineer",
     "company": "SymphonyAI",
     "location": "KA, IN",
@@ -392,7 +392,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-988cfd4e",
+    "id": "job-64b3faf2",
     "title": "Senior QA Engineer - Manual Testing,Database Testing,Api Testing,Sql",
     "company": "Blue Yonder",
     "location": "MH, IN",
@@ -406,7 +406,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-7dda41e3",
+    "id": "job-671f8a66",
     "title": "Junior Software Developer (Contract)",
     "company": "Infineon Technologies",
     "location": "KA, IN",
@@ -420,7 +420,7 @@
     "platform": "Indeed"
   },
   {
-    "id": "job-6a98ea92",
+    "id": "job-bd0cf785",
     "title": "Dotnet Developer",
     "company": "Vasp Technologies Pvt. Ltd.",
     "location": "Guwahati, Assam, India",
@@ -434,21 +434,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-f885f9aa",
-    "title": "Associate Software Engineer - AI",
-    "company": "Alegeus",
-    "location": "Bengaluru East, Karnataka, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4466478934",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-01fc120c",
+    "id": "job-062b972c",
     "title": "Software Engineer",
     "company": "Copart",
     "location": "India",
@@ -462,7 +448,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-aaa8c1fc",
+    "id": "job-b677cd1f",
     "title": "Full Stack Engineer",
     "company": "RIB Software",
     "location": "India",
@@ -476,7 +462,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-beb443e3",
+    "id": "job-677493ff",
     "title": "SDE II (Backend)",
     "company": "Admaren Tech Private Limited",
     "location": "Kochi, Kerala, India",
@@ -490,7 +476,21 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-0ad78e41",
+    "id": "job-6369bd5e",
+    "title": "Software Engineer - E-Commerce (Remote)",
+    "company": "Hire Feed",
+    "location": "India",
+    "job_type": "Full-time",
+    "workplace_type": "Remote",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4466455406",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-5717afc3",
     "title": "Backend Software Engineer (Remote)",
     "company": "Quik Hire Staffing",
     "location": "India",
@@ -504,7 +504,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-a0d7f866",
+    "id": "job-64a663a4",
     "title": "Java Full Stack Engineer",
     "company": "SRM Digital",
     "location": "Pune District, Maharashtra, India",
@@ -518,7 +518,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-06602329",
+    "id": "job-cdf7ec5e",
     "title": "Intermediate Software Engineer- Full Stack-C#, Dotnet, MVC, Angular, Azure Cloud",
     "company": "UPS",
     "location": "Chennai, Tamil Nadu, India",
@@ -532,7 +532,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-d1fb112a",
+    "id": "job-4fe2c466",
     "title": "Full Stack Developer - Fresher",
     "company": "Munim - Accounting, Billing & GST Software",
     "location": "Surat, Gujarat, India",
@@ -546,7 +546,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-ce0fcf66",
+    "id": "job-6fd8245e",
     "title": "Senior Software Engineer",
     "company": "CUBE",
     "location": "Bengaluru, Karnataka, India",
@@ -560,7 +560,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-606bcb46",
+    "id": "job-ae1483a1",
     "title": "python Developer",
     "company": "People Prime Worldwide",
     "location": "India",
@@ -574,7 +574,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-672de6cc",
+    "id": "job-2f4c6e5c",
     "title": "Associate Software Engineer 1",
     "company": "PowerSchool",
     "location": "Chennai, Tamil Nadu, India",
@@ -588,7 +588,21 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-32142f75",
+    "id": "job-d3ee01da",
+    "title": "Associate Software Engineer / Sr. Associate Software Engineer",
+    "company": "MDI NetworX",
+    "location": "Pune Division, Maharashtra, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4465169000",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-081fe4ee",
     "title": "Full Stack Developer Intern - Python, Django",
     "company": "Venxr",
     "location": "Pune Division, Maharashtra, India",
@@ -602,7 +616,21 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-bb856093",
+    "id": "job-2ae68595",
+    "title": "BACKEND DEVELOPER",
+    "company": "HighKernel",
+    "location": "Bhopal, Madhya Pradesh, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4464878779",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-0721afd0",
     "title": "Senior Dotnet Developer",
     "company": "ClanX",
     "location": "Pune Division, Maharashtra, India",
@@ -616,7 +644,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-91b9e109",
+    "id": "job-e8f8f25e",
     "title": ".NET core and ReactJS (front end) developer (TK49SI RM 4402)",
     "company": "Source-Right",
     "location": "Pune Division, Maharashtra, India",
@@ -630,7 +658,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-c58808b2",
+    "id": "job-e4c0c9b9",
     "title": "Senior Python Backend Engineer",
     "company": "WillWare Technologies",
     "location": "Bengaluru, Karnataka, India",
@@ -644,7 +672,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-8c5b23d3",
+    "id": "job-8a9c4c61",
     "title": ".Net Developer",
     "company": "Coditas",
     "location": "Pune Division, Maharashtra, India",
@@ -658,7 +686,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-653d017d",
+    "id": "job-e57b0521",
     "title": "Software Development Engineer II-Java",
     "company": "HuntingCube",
     "location": "Bengaluru, Karnataka, India",
@@ -672,7 +700,21 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-03abea90",
+    "id": "job-36a31a57",
+    "title": ".Net Developer",
+    "company": "MDI NetworX",
+    "location": "Pune Division, Maharashtra, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4465164030",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-2850d0a1",
     "title": "Java Spring Boot Developer",
     "company": "Tata Consultancy Services",
     "location": "Chennai, Tamil Nadu, India",
@@ -686,21 +728,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-fb42860b",
-    "title": "Backend Engineer (Java / Spring Boot)",
-    "company": "Nextloop Technologies LLP",
-    "location": "Thane, Maharashtra, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4464848827",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-684d0411",
+    "id": "job-961f0be9",
     "title": "Back End Developer (Python Django) 3-5 Yrs",
     "company": "Adhyay Infotech",
     "location": "Navi Mumbai, Maharashtra, India",
@@ -714,7 +742,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-fb078a40",
+    "id": "job-9eecacdc",
     "title": "Python Engineer",
     "company": "Tata Consultancy Services",
     "location": "Bengaluru, Karnataka, India",
@@ -728,7 +756,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-c1b0ca85",
+    "id": "job-d20facfd",
     "title": "Full Stack Developer",
     "company": "Side",
     "location": "Hyderabad, Telangana, India",
@@ -742,7 +770,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-fb497386",
+    "id": "job-bee2a056",
     "title": "Assoc Engineer",
     "company": "Qualcomm",
     "location": "India",
@@ -756,7 +784,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-a098294e",
+    "id": "job-0ecb7cc0",
     "title": "Software Engineer",
     "company": "Jobgether",
     "location": "India",
@@ -770,35 +798,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-b6a83f74",
-    "title": "Programmer (Dev)",
-    "company": "Persistent Systems",
-    "location": "Pune City, Maharashtra, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4463962717",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-fb17fb50",
-    "title": "Junior Software Engineer",
-    "company": "Allata",
-    "location": "Vadodara, Gujarat, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4465874936",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-b2d7f554",
+    "id": "job-7974d7ab",
     "title": "IoT Software Developer - Device Engineering Team-Husky(India) Guindy, Chennai",
     "company": "Husky Technologies",
     "location": "Chennai, Tamil Nadu, India",
@@ -808,11 +808,11 @@
     "salary": "Competitive",
     "posted_date": "Recently",
     "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4465471903",
+    "job_link": "https://www.linkedin.com/jobs/view/4465479429",
     "platform": "LinkedIn"
   },
   {
-    "id": "job-965c66c3",
+    "id": "job-7a1ac061",
     "title": "Senior Software Engineer",
     "company": "Corpay",
     "location": "India",
@@ -826,7 +826,7 @@
     "platform": "LinkedIn"
   },
   {
-    "id": "job-f2bd5d23",
+    "id": "job-3c4fa490",
     "title": "Staff/ Senior Software Engineer C++",
     "company": "TeamViewer",
     "location": "Noida, Uttar Pradesh, India",
@@ -2291,7 +2291,7 @@
     "experience": "Verified Role",
     "salary": "Competitive",
     "posted_date": "Recent",
-    "description": "Find more English Speaking Jobs in Germany on Arbeitnow",
+    "description": "Find Jobs in Germany on Arbeitnow",
     "job_link": "https://www.arbeitnow.com/jobs/companies/werraenergie-gmbh/werkstudent-bad-salzungen-464502",
     "platform": "Arbeitnow"
   },
@@ -2436,7 +2436,7 @@
     "platform": "Arbeitnow"
   },
   {
-    "id": "wwr-473c2648",
+    "id": "wwr-44727e81",
     "title": "Finance Business Partner (Marketing & Product)",
     "company": "Holafly",
     "location": "Remote (Global)",
@@ -2450,7 +2450,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-bf614190",
+    "id": "wwr-832e2066",
     "title": "Product Manager AI Personalization",
     "company": "Trafilea",
     "location": "Remote (Global)",
@@ -2464,7 +2464,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-cde41a3d",
+    "id": "wwr-2211871b",
     "title": "Full Stack Developer",
     "company": "Wing Assistant",
     "location": "Remote (Global)",
@@ -2478,7 +2478,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-a46e678f",
+    "id": "wwr-862363cc",
     "title": "AWS DevOps Engineer",
     "company": "Stadium",
     "location": "Remote (Global)",
@@ -2492,7 +2492,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-01954bf3",
+    "id": "wwr-0f94e4a3",
     "title": "Senior Product Manager, Cluster Linking",
     "company": "Confluent",
     "location": "Remote (Global)",
@@ -2506,7 +2506,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-42673ccd",
+    "id": "wwr-23bf0af3",
     "title": "(Native Finnish) Customer Support Consultant (Future Openings, remotely)",
     "company": "Supportyourapp",
     "location": "Remote (Global)",
@@ -2520,7 +2520,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-5261139b",
+    "id": "wwr-d4d24e56",
     "title": "DevOps Engineer",
     "company": "Zowie",
     "location": "Remote (Global)",
@@ -2534,7 +2534,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-6ac68dcf",
+    "id": "wwr-08ee5191",
     "title": "Principal Software Engineer - Product team",
     "company": "Aker Systems",
     "location": "Remote (Global)",
@@ -2548,7 +2548,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-81d39a5e",
+    "id": "wwr-2285c7ff",
     "title": "Senior Product Designer, Mobile Experience",
     "company": "Happyco",
     "location": "Remote (Global)",
@@ -2562,7 +2562,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-ece71711",
+    "id": "wwr-9d7c609e",
     "title": "Senior Product Designer, AI",
     "company": "Zeta Global",
     "location": "Remote (Global)",
@@ -2576,7 +2576,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-286c894a",
+    "id": "wwr-75c04593",
     "title": "Senior Product Designer, Agentic AI Applications",
     "company": "Zeta Global",
     "location": "Remote (Global)",
@@ -2590,7 +2590,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-4d992499",
+    "id": "wwr-c795a64c",
     "title": "DevOps Senior",
     "company": "Coderio",
     "location": "Remote (Global)",
@@ -2604,7 +2604,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-5fa1a3c9",
+    "id": "wwr-77aed59f",
     "title": "Digital Design Diagram Creators",
     "company": "Summa Linguae Technologies",
     "location": "Remote (Global)",
@@ -2618,7 +2618,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-f5fdb9c5",
+    "id": "wwr-d819e1a9",
     "title": "Senior DevOps Engineer (m/f/d)",
     "company": "Myneva",
     "location": "Remote (Global)",
@@ -2632,7 +2632,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-f9169891",
+    "id": "wwr-abc268d1",
     "title": "Junior DevOps Engineer (CI/CD & Developer Tooling) remote (m/f/d)",
     "company": "Charisma-tec",
     "location": "Remote (Global)",
@@ -2646,7 +2646,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-0a2f674b",
+    "id": "wwr-f31e5769",
     "title": "Senior Software Engineer, remote",
     "company": "Edfinity",
     "location": "Remote (Global)",
@@ -2660,7 +2660,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-0894e139",
+    "id": "wwr-3079d5e2",
     "title": "AI/ML Engineer for an AI-Driven E-Commerce Platform",
     "company": "Toptal",
     "location": "Remote (Global)",
@@ -2674,7 +2674,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-17f29570",
+    "id": "wwr-68ec6cc8",
     "title": "Staff Software Engineer",
     "company": "Samsara",
     "location": "Remote (Global)",
@@ -2688,7 +2688,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-3fcffd5c",
+    "id": "wwr-571b9092",
     "title": "Senior Software AI Engineer",
     "company": "Collaboration.Ai",
     "location": "Remote (Global)",
@@ -2702,7 +2702,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-0ff06b3b",
+    "id": "wwr-16b8ee28",
     "title": "Senior Software Engineer",
     "company": "Collaboration.Ai",
     "location": "Remote (Global)",
@@ -2716,7 +2716,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-f8c20297",
+    "id": "wwr-bbf18c0f",
     "title": "Account Executive, Commercial (Pittsburgh)",
     "company": "Everpure",
     "location": "Remote (Global)",
@@ -2730,7 +2730,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-4a850f8c",
+    "id": "wwr-e214d1c8",
     "title": "Account Executive, Commercial (Alaska)",
     "company": "Everpure",
     "location": "Remote (Global)",
@@ -2744,7 +2744,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-56474292",
+    "id": "wwr-207ad1da",
     "title": "Developer Relations Engineer - UK",
     "company": "Storyblok",
     "location": "Remote (Global)",
@@ -2758,7 +2758,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-ae0219f7",
+    "id": "wwr-798262b6",
     "title": "Business Development Representative - UK&I",
     "company": "Storyblok",
     "location": "Remote (Global)",
@@ -2772,7 +2772,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-e942a1e8",
+    "id": "wwr-ba6dfdd6",
     "title": "Account Executive - Federal",
     "company": "Celonis",
     "location": "Remote (Global)",
@@ -2786,7 +2786,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-37bc3b87",
+    "id": "wwr-aaa1fb12",
     "title": "Account Executive - CPG",
     "company": "Celonis",
     "location": "Remote (Global)",
@@ -2800,7 +2800,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-a0de6593",
+    "id": "wwr-f7fbf977",
     "title": "Business Development Representative - Japan (Remote)",
     "company": "Dropbox",
     "location": "Remote (Global)",
@@ -2814,7 +2814,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-47bde387",
+    "id": "wwr-5ebcd75a",
     "title": "Referral Partner for @BudgetsByTammy on TikTok - 25% Commission",
     "company": "Budgets by Tammy",
     "location": "Remote (Global)",
@@ -2828,7 +2828,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-c4c9920f",
+    "id": "wwr-235d137a",
     "title": "Head of Marketing",
     "company": "OnTheGoSystems",
     "location": "Remote (Global)",
@@ -2842,7 +2842,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-2147f26d",
+    "id": "wwr-30069bc5",
     "title": "Account Executive 3 - DACH",
     "company": "Wrike",
     "location": "Remote (Global)",
@@ -2856,7 +2856,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-6b968cac",
+    "id": "wwr-d6b63dfc",
     "title": "Project Manager",
     "company": "UTTR",
     "location": "Remote (Global)",
@@ -2870,7 +2870,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-a3110078",
+    "id": "wwr-6c6954d5",
     "title": "Senior Performance Marketing Manager (Part-Time)",
     "company": "UTTR",
     "location": "Remote (Global)",
@@ -2884,7 +2884,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-557ac0a0",
+    "id": "wwr-75dd8628",
     "title": "Growth Manager - Short-Form Content (Instagram & TikTok)",
     "company": "xoangels",
     "location": "Remote (Global)",
@@ -2898,7 +2898,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-b4c65307",
+    "id": "wwr-dad467cf",
     "title": "Account Executive, AI/HPC, Neo / Sovereign Cloud (EMEA)",
     "company": "Everpure",
     "location": "Remote (Global)",
@@ -2912,7 +2912,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-c482146c",
+    "id": "wwr-ff788dfa",
     "title": "Business Development Lead, Digital Agency",
     "company": "Current",
     "location": "Remote (Global)",
@@ -2926,7 +2926,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-8cdbed78",
+    "id": "wwr-1119969c",
     "title": "Principal Account Executive",
     "company": "Veracode",
     "location": "Remote (Global)",
@@ -2940,7 +2940,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-5b3ee8f0",
+    "id": "wwr-b8c27ef7",
     "title": "Director, Account Management",
     "company": "Veracode",
     "location": "Remote (Global)",
@@ -2954,7 +2954,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-6a174b69",
+    "id": "wwr-0c44792e",
     "title": "Head of Sales and Customer Success",
     "company": "Secret",
     "location": "Remote (Global)",
@@ -2968,7 +2968,7 @@
     "platform": "WeWorkRemotely"
   },
   {
-    "id": "wwr-81c93913",
+    "id": "wwr-3b394eb0",
     "title": "Account Executive, Commercial - Mid Market (Central / East)",
     "company": "Smartsheet",
     "location": "Remote (Global)",
@@ -2980,6 +2980,90 @@
     "description": "Headquarters: -REMOTE, USA- For over 20 years, Smartsheet has empowered teams to manage work seamlessly and scale solutions smarter. Now, in our most ambitious chapter yet, we are uniting human teams with AI agents. By orchestrating the work agents do best, automating manual t...",
     "job_link": "https://weworkremotely.com/remote-jobs/smartsheet-account-executive-commercial-mid-market-central-east",
     "platform": "WeWorkRemotely"
+  },
+  {
+    "id": "job-0237503f",
+    "title": "Software Trainee",
+    "company": "Vantiva",
+    "location": "TN, IN",
+    "job_type": "Internship",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "**About Vantiva** **Pushing the Edge** **Vantiva (Euronext Paris: VANTI)** is a global technology leader in connectivity technologies. For over 130 years, we have delivered solutions that connect what matters most. Today, we continue to redefine connectivity with industry\\-lea...",
+    "job_link": "https://in.indeed.com/viewjob?jk=22bf1926f7b18b6b",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-bc07aca6",
+    "title": "Mid-Level Developer - AI-Enabled Systems (Remote, India)",
+    "company": "Best Access Doors",
+    "location": "KA, IN",
+    "job_type": "Full-time",
+    "workplace_type": "Remote",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "**Mid\\-Level Developer - AI\\-Enabled Systems (Remote, Global)** **Reports To:** Development Team Lead **The Culture:** We are building a data\\-driven, AI\\-empowered, Top 10 Best Workplace that values Integrity, Accountability, People and Innovation. At Best Access Doors, AI is...",
+    "job_link": "https://in.indeed.com/viewjob?jk=0dba92a64cfd834c",
+    "platform": "Indeed"
+  },
+  {
+    "id": "job-f885f9aa",
+    "title": "Associate Software Engineer - AI",
+    "company": "Alegeus",
+    "location": "Bengaluru East, Karnataka, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4466478934",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-fb42860b",
+    "title": "Backend Engineer (Java / Spring Boot)",
+    "company": "Nextloop Technologies LLP",
+    "location": "Thane, Maharashtra, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4464848827",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-b6a83f74",
+    "title": "Programmer (Dev)",
+    "company": "Persistent Systems",
+    "location": "Pune City, Maharashtra, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4463962717",
+    "platform": "LinkedIn"
+  },
+  {
+    "id": "job-fb17fb50",
+    "title": "Junior Software Engineer",
+    "company": "Allata",
+    "location": "Vadodara, Gujarat, India",
+    "job_type": "Full-time",
+    "workplace_type": "On-site",
+    "experience": "Verified Opening",
+    "salary": "Competitive",
+    "posted_date": "Recently",
+    "description": "nan",
+    "job_link": "https://www.linkedin.com/jobs/view/4465874936",
+    "platform": "LinkedIn"
   },
   {
     "id": "job-c0962177",
@@ -3092,48 +3176,6 @@
     "description": "Job Description **About Persistent** We are an AI\\-led, platform\\-driven Digital Engineering and Enterprise Modernization partner, combining deep technical expertise and industry experience to help our clients anticipate what?s next. Our offerings and proven solutions create a...",
     "job_link": "https://in.indeed.com/viewjob?jk=3f632631ce146e11",
     "platform": "Indeed"
-  },
-  {
-    "id": "job-d90f60a9",
-    "title": "Software Engineer - E-Commerce (Remote)",
-    "company": "Hire Feed",
-    "location": "India",
-    "job_type": "Full-time",
-    "workplace_type": "Remote",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4466455406",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-4dc4f83b",
-    "title": "Associate Software Engineer / Sr. Associate Software Engineer",
-    "company": "MDI NetworX",
-    "location": "Pune Division, Maharashtra, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4465169000",
-    "platform": "LinkedIn"
-  },
-  {
-    "id": "job-d0a457da",
-    "title": "BACKEND DEVELOPER",
-    "company": "HighKernel",
-    "location": "Bhopal, Madhya Pradesh, India",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "nan",
-    "job_link": "https://www.linkedin.com/jobs/view/4464878779",
-    "platform": "LinkedIn"
   },
   {
     "id": "job-e9fe9b5c",
@@ -3455,48 +3497,6 @@
     "posted_date": "Recently",
     "description": "About the Role We are looking for an experienced SSRS Developer who will be responsible for designing, developing, maintaining, and optimizing business reports using Microsoft SQL Server Reporting Services (SSRS). The role will involve working closely with business and technic...",
     "job_link": "https://in.indeed.com/viewjob?jk=6f2e0815a44f4cb3",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-275d45ff",
-    "title": "Software Design Engineer",
-    "company": "nan",
-    "location": "WB, IN",
-    "job_type": "Part-time",
-    "workplace_type": "Hybrid",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "**Software Design Engineer - New Project** Location: Kolkata (Hybrid) \\| Full\\-time \\| Experience: 2 - 5 years **The Role** We are looking for a Software Design Engineer who sits at the intersection of engineering and visual design - someone who can both build production\\-read...",
-    "job_link": "https://in.indeed.com/viewjob?jk=ec3e27320979abf4",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-f3a70273",
-    "title": "Python Developer",
-    "company": "Capgemini",
-    "location": "MH, IN",
-    "job_type": "Full-time",
-    "workplace_type": "On-site",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "At Capgemini Engineering, the world leader in engineering services, we bring together a global team of engineers, scientists, and architects to help the world - s most innovative companies unleash their potential. From autonomous cars to life\\-saving robots, our digital and so...",
-    "job_link": "https://in.indeed.com/viewjob?jk=3dc0b6a895e5b7ed",
-    "platform": "Indeed"
-  },
-  {
-    "id": "job-1ade1e07",
-    "title": "Software Engineer (Data Systems/ETL)",
-    "company": "Harris Computer",
-    "location": "Remote, IN",
-    "job_type": "Full-time",
-    "workplace_type": "Remote",
-    "experience": "Verified Opening",
-    "salary": "Competitive",
-    "posted_date": "Recently",
-    "description": "**Job Summary:** We are looking for a mid\\-level Software Engineer to join our data systems team, with a primary focus on the day\\-to\\-day processing, reliability, and performance of our billing engine and the data pipelines that feed it. This role requires a strong SQL founda...",
-    "job_link": "https://in.indeed.com/viewjob?jk=a865045f61074090",
     "platform": "Indeed"
   }
 ]
