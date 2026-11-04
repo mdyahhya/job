@@ -35,11 +35,36 @@ const LinkedInManager = (() => {
 {signature}`
   };
 
+  function safeGet(key) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        return localStorage.getItem(key);
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function safeSet(key, val) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(key, val);
+      }
+    } catch (e) {}
+  }
+
+  function safeRemove(key) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(key);
+      }
+    } catch (e) {}
+  }
+
   /**
    * Get configured heading.
    */
   function getHeading() {
-    const saved = localStorage.getItem(STORAGE_KEYS.HEADING);
+    const saved = safeGet(STORAGE_KEYS.HEADING);
     return saved !== null && saved !== undefined && saved.trim() !== ''
       ? saved.trim()
       : DEFAULT_CONFIG.heading;
@@ -50,7 +75,7 @@ const LinkedInManager = (() => {
    */
   function setHeading(heading) {
     if (typeof heading === 'string') {
-      localStorage.setItem(STORAGE_KEYS.HEADING, heading.trim());
+      safeSet(STORAGE_KEYS.HEADING, heading.trim());
     }
   }
 
@@ -58,7 +83,7 @@ const LinkedInManager = (() => {
    * Get hashtags.
    */
   function getHashtags() {
-    const saved = localStorage.getItem(STORAGE_KEYS.HASHTAGS);
+    const saved = safeGet(STORAGE_KEYS.HASHTAGS);
     return saved !== null && saved !== undefined ? saved : DEFAULT_CONFIG.hashtags;
   }
 
@@ -67,7 +92,7 @@ const LinkedInManager = (() => {
    */
   function setHashtags(hashtags) {
     if (typeof hashtags === 'string') {
-      localStorage.setItem(STORAGE_KEYS.HASHTAGS, hashtags.trim());
+      safeSet(STORAGE_KEYS.HASHTAGS, hashtags.trim());
     }
   }
 
@@ -75,7 +100,7 @@ const LinkedInManager = (() => {
    * Get signature.
    */
   function getSignature() {
-    const saved = localStorage.getItem(STORAGE_KEYS.SIGNATURE);
+    const saved = safeGet(STORAGE_KEYS.SIGNATURE);
     return saved !== null && saved !== undefined ? saved : DEFAULT_CONFIG.signature;
   }
 
@@ -84,7 +109,7 @@ const LinkedInManager = (() => {
    */
   function setSignature(signature) {
     if (typeof signature === 'string') {
-      localStorage.setItem(STORAGE_KEYS.SIGNATURE, signature.trim());
+      safeSet(STORAGE_KEYS.SIGNATURE, signature.trim());
     }
   }
 
@@ -92,7 +117,7 @@ const LinkedInManager = (() => {
    * Get template string.
    */
   function getTemplate() {
-    const saved = localStorage.getItem(STORAGE_KEYS.TEMPLATE);
+    const saved = safeGet(STORAGE_KEYS.TEMPLATE);
     return saved ? saved : DEFAULT_CONFIG.template;
   }
 
@@ -101,7 +126,7 @@ const LinkedInManager = (() => {
    */
   function setTemplate(template) {
     if (typeof template === 'string') {
-      localStorage.setItem(STORAGE_KEYS.TEMPLATE, template);
+      safeSet(STORAGE_KEYS.TEMPLATE, template);
     }
   }
 
@@ -109,10 +134,10 @@ const LinkedInManager = (() => {
    * Reset all LinkedIn settings to defaults.
    */
   function resetDefaults() {
-    localStorage.removeItem(STORAGE_KEYS.HEADING);
-    localStorage.removeItem(STORAGE_KEYS.TEMPLATE);
-    localStorage.removeItem(STORAGE_KEYS.HASHTAGS);
-    localStorage.removeItem(STORAGE_KEYS.SIGNATURE);
+    safeRemove(STORAGE_KEYS.HEADING);
+    safeRemove(STORAGE_KEYS.TEMPLATE);
+    safeRemove(STORAGE_KEYS.HASHTAGS);
+    safeRemove(STORAGE_KEYS.SIGNATURE);
   }
 
   /**
@@ -225,7 +250,7 @@ const LinkedInManager = (() => {
    */
   function getPostedLog() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.POSTED_LOG);
+      const data = safeGet(STORAGE_KEYS.POSTED_LOG);
       return data ? JSON.parse(data) : [];
     } catch (e) {
       console.error('Error reading LinkedIn posted log:', e);
@@ -267,7 +292,7 @@ const LinkedInManager = (() => {
         minute: '2-digit',
         hour12: true
       }).format(new Date()),
-      captionSnippet: postText.substring(0, 140) + (postText.length > 140 ? '...' : '')
+      captionSnippet: (postText || '').substring(0, 140) + ((postText || '').length > 140 ? '...' : '')
     };
 
     if (existingIndex >= 0) {
@@ -277,10 +302,12 @@ const LinkedInManager = (() => {
 
     // Keep up to 250 most recent items
     const trimmed = log.slice(0, 250);
-    localStorage.setItem(STORAGE_KEYS.POSTED_LOG, JSON.stringify(trimmed));
+    safeSet(STORAGE_KEYS.POSTED_LOG, JSON.stringify(trimmed));
 
     // Dispatch custom event for UI reactivity across all components
-    window.dispatchEvent(new CustomEvent('dominal:job-linkedin-posted', { detail: logEntry }));
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('dominal:job-linkedin-posted', { detail: logEntry }));
+    }
     return logEntry;
   }
 
@@ -289,16 +316,20 @@ const LinkedInManager = (() => {
    */
   function removePostedLogEntry(jobId) {
     const log = getPostedLog().filter(item => item.jobId !== jobId);
-    localStorage.setItem(STORAGE_KEYS.POSTED_LOG, JSON.stringify(log));
-    window.dispatchEvent(new CustomEvent('dominal:job-linkedin-updated'));
+    safeSet(STORAGE_KEYS.POSTED_LOG, JSON.stringify(log));
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('dominal:job-linkedin-updated'));
+    }
   }
 
   /**
    * Clear the entire LinkedIn posted log.
    */
   function clearPostedLog() {
-    localStorage.removeItem(STORAGE_KEYS.POSTED_LOG);
-    window.dispatchEvent(new CustomEvent('dominal:job-linkedin-updated'));
+    safeRemove(STORAGE_KEYS.POSTED_LOG);
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('dominal:job-linkedin-updated'));
+    }
   }
 
   return {
