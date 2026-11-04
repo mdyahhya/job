@@ -12,7 +12,7 @@ const App = (() => {
   let activeJobTypeFilter = localStorage.getItem('dominal_type_filter') || 'all';
   let activeWorkplaceFilter = localStorage.getItem('dominal_workplace_filter') || 'all';
   let activeStatusFilter = localStorage.getItem('dominal_feed_status_filter') || 'fresh'; // 'fresh' (default, hides checked on refresh) or 'all'
-  let currentHistoryTab = 'checked'; // 'checked', 'archive', or 'queries'
+  let currentHistoryTab = 'all'; // 'all', 'applied', 'linkedin', 'whatsapp', 'archive', or 'queries'
   let searchQuery = '';
 
   // Dedicated Scraped Jobs Archive Filter State
@@ -48,97 +48,240 @@ const App = (() => {
       }
     },
 
-    isChecked(jobId) {
-      if (!jobId) return false;
-      const ids = this.getCheckedIds();
-      return ids.includes(jobId);
+    getDataMap() {
+      try {
+        const raw = localStorage.getItem(this.KEYS.CHECKED_DATA);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
     },
 
-    markChecked(jobId, jobData) {
+    saveDataMap(map) {
+      try {
+        localStorage.setItem(this.KEYS.CHECKED_DATA, JSON.stringify(map || {}));
+      } catch (e) {
+        console.error('Error saving checked data:', e);
+      }
+    },
+
+    isApplied(jobId) {
+      if (!jobId) return false;
+      const map = this.getDataMap();
+      const item = map[jobId];
+      if (item) {
+        if (typeof item.applied === 'boolean') return item.applied;
+        return true;
+      }
+      return false;
+    },
+
+    isLinkedInPosted(jobId) {
+      if (!jobId) return false;
+      const map = this.getDataMap();
+      if (map[jobId]?.linkedinPosted) return true;
+      if (typeof LinkedInManager !== 'undefined' && LinkedInManager.isJobPosted(jobId)) return true;
+      return false;
+    },
+
+    isWhatsAppShared(jobId) {
+      if (!jobId) return false;
+      const map = this.getDataMap();
+      if (map[jobId]?.whatsappShared) return true;
+      if (typeof WhatsAppManager !== 'undefined' && WhatsAppManager.isJobSent(jobId)) return true;
+      return false;
+    },
+
+    isChecked(jobId) {
+      if (!jobId) return false;
+      if (this.isApplied(jobId)) return true;
+      if (this.isLinkedInPosted(jobId)) return true;
+      if (this.isWhatsAppShared(jobId)) return true;
+      return this.getCheckedIds().includes(jobId);
+    },
+
+    markApplied(jobId, jobData) {
       if (!jobId) return;
       const ids = this.getCheckedIds();
       if (!ids.includes(jobId)) {
         ids.push(jobId);
         localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
       }
-      try {
-        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
-        const map = dataRaw ? JSON.parse(dataRaw) : {};
-        map[jobId] = {
-          ...(jobData || {}),
-          id: jobId,
-          checkedAt: new Date().toISOString(),
-          formattedCheckedAt: new Intl.DateTimeFormat('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-          }).format(new Date())
-        };
-        localStorage.setItem(this.KEYS.CHECKED_DATA, JSON.stringify(map));
-      } catch (e) {
-        console.error('Error saving checked job data:', e);
+      const map = this.getDataMap();
+      const now = new Date().toISOString();
+      const formatted = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date());
+
+      const existing = map[jobId] || { id: jobId, ...(jobData || {}) };
+      existing.applied = true;
+      existing.appliedAt = now;
+      existing.formattedAppliedAt = formatted;
+      existing.checkedAt = existing.checkedAt || now;
+      existing.formattedCheckedAt = existing.formattedCheckedAt || formatted;
+
+      map[jobId] = existing;
+      this.saveDataMap(map);
+      this.updateHistoryBadge();
+    },
+
+    unmarkApplied(jobId) {
+      if (!jobId) return;
+      const map = this.getDataMap();
+      if (map[jobId]) {
+        map[jobId].applied = false;
+        if (!map[jobId].linkedinPosted && !map[jobId].whatsappShared) {
+          delete map[jobId];
+          const ids = this.getCheckedIds().filter(id => id !== jobId);
+          localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
+        }
+        this.saveDataMap(map);
       }
       this.updateHistoryBadge();
+    },
+
+    toggleApplied(jobId, jobData) {
+      const currentlyApplied = this.isApplied(jobId);
+      if (currentlyApplied) {
+        this.unmarkApplied(jobId);
+        return false;
+      } else {
+        this.markApplied(jobId, jobData);
+        return true;
+      }
+    },
+
+    markLinkedInPosted(jobId, jobData) {
+      if (!jobId) return;
+      const ids = this.getCheckedIds();
+      if (!ids.includes(jobId)) {
+        ids.push(jobId);
+        localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
+      }
+      const map = this.getDataMap();
+      const now = new Date().toISOString();
+      const formatted = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date());
+
+      const existing = map[jobId] || { id: jobId, ...(jobData || {}) };
+      existing.linkedinPosted = true;
+      existing.linkedinPostedAt = now;
+      existing.formattedLinkedInAt = formatted;
+      existing.checkedAt = existing.checkedAt || now;
+      existing.formattedCheckedAt = existing.formattedCheckedAt || formatted;
+
+      map[jobId] = existing;
+      this.saveDataMap(map);
+      this.updateHistoryBadge();
+    },
+
+    markWhatsAppShared(jobId, jobData) {
+      if (!jobId) return;
+      const ids = this.getCheckedIds();
+      if (!ids.includes(jobId)) {
+        ids.push(jobId);
+        localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
+      }
+      const map = this.getDataMap();
+      const now = new Date().toISOString();
+      const formatted = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(new Date());
+
+      const existing = map[jobId] || { id: jobId, ...(jobData || {}) };
+      existing.whatsappShared = true;
+      existing.whatsappSharedAt = now;
+      existing.formattedWhatsAppAt = formatted;
+
+      map[jobId] = existing;
+      this.saveDataMap(map);
+      this.updateHistoryBadge();
+    },
+
+    toggleChecked(jobId, jobData) {
+      return this.toggleApplied(jobId, jobData);
+    },
+
+    markChecked(jobId, jobData) {
+      this.markApplied(jobId, jobData);
     },
 
     uncheck(jobId) {
       if (!jobId) return;
       const ids = this.getCheckedIds().filter(id => id !== jobId);
       localStorage.setItem(this.KEYS.CHECKED_IDS, JSON.stringify(ids));
-      try {
-        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
-        if (dataRaw) {
-          const map = JSON.parse(dataRaw);
-          delete map[jobId];
-          localStorage.setItem(this.KEYS.CHECKED_DATA, JSON.stringify(map));
-        }
-      } catch (e) {}
+      const map = this.getDataMap();
+      delete map[jobId];
+      this.saveDataMap(map);
+      if (typeof LinkedInManager !== 'undefined') {
+        LinkedInManager.removePostedLogEntry(jobId);
+      }
+      if (typeof WhatsAppManager !== 'undefined') {
+        WhatsAppManager.removeSentLogEntry(jobId);
+      }
       this.updateHistoryBadge();
     },
 
-    toggleChecked(jobId, jobData) {
-      const isCurrentlyChecked = this.isChecked(jobId);
-      if (isCurrentlyChecked) {
-        this.uncheck(jobId);
-        return false;
-      } else {
-        this.markChecked(jobId, jobData);
-        return true;
+    getAllTrackedJobs() {
+      const map = this.getDataMap();
+      const ids = this.getCheckedIds();
+      const result = [];
+      const seen = new Set();
+
+      for (let i = ids.length - 1; i >= 0; i--) {
+        const id = ids[i];
+        if (!seen.has(id)) {
+          seen.add(id);
+          if (map[id]) {
+            result.push(map[id]);
+          } else {
+            const found = allJobs.find(j => j.id === id) || this.getFetchedArchive().find(j => j.id === id);
+            if (found) result.push(found);
+          }
+        }
       }
+      return result;
+    },
+
+    getAppliedJobs() {
+      return this.getAllTrackedJobs().filter(j => this.isApplied(j.id));
+    },
+
+    getLinkedInJobs() {
+      return this.getAllTrackedJobs().filter(j => this.isLinkedInPosted(j.id));
+    },
+
+    getWhatsAppJobs() {
+      return this.getAllTrackedJobs().filter(j => this.isWhatsAppShared(j.id));
     },
 
     getCheckedJobs() {
-      try {
-        const dataRaw = localStorage.getItem(this.KEYS.CHECKED_DATA);
-        const map = dataRaw ? JSON.parse(dataRaw) : {};
-        const ids = this.getCheckedIds();
-        const jobs = [];
-        for (let i = ids.length - 1; i >= 0; i--) {
-          const id = ids[i];
-          if (map[id]) {
-            jobs.push(map[id]);
-          } else {
-            const found = allJobs.find(j => j.id === id);
-            if (found) {
-              jobs.push(found);
-            }
-          }
-        }
-        return jobs;
-      } catch (e) {
-        return [];
-      }
+      return this.getAllTrackedJobs();
     },
 
     getCheckedCount() {
-      return this.getCheckedIds().length;
+      return this.getAllTrackedJobs().length;
     },
 
     clearChecked() {
       localStorage.removeItem(this.KEYS.CHECKED_IDS);
       localStorage.removeItem(this.KEYS.CHECKED_DATA);
+      if (typeof LinkedInManager !== 'undefined') {
+        LinkedInManager.clearPostedLog();
+      }
       this.updateHistoryBadge();
     },
 
@@ -185,26 +328,45 @@ const App = (() => {
     },
 
     updateHistoryBadge() {
-      const count = this.getCheckedCount();
-      const badge = document.getElementById('taskbar-activity-badge');
-      if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-      }
-      const checkedCountTxt = document.getElementById('txt-history-checked-count');
-      if (checkedCountTxt) {
-        checkedCountTxt.textContent = `Checked Jobs (${count})`;
-      }
+      const allTracked = this.getAllTrackedJobs();
+      const totalCount = allTracked.length;
+      const appliedCount = this.getAppliedJobs().length;
+      const linkedinCount = this.getLinkedInJobs().length;
+      const whatsappCount = this.getWhatsAppJobs().length;
       const archiveCount = this.getFetchedArchive().length;
-      const archiveCountTxt = document.getElementById('txt-history-archive-count');
-      if (archiveCountTxt) {
-        archiveCountTxt.textContent = `All Scraped Archive (${archiveCount})`;
-      }
       const queriesCount = getSearchHistory().length;
-      const queriesCountTxt = document.getElementById('txt-history-queries-count');
-      if (queriesCountTxt) {
-        queriesCountTxt.textContent = `Search Queries (${queriesCount})`;
+
+      // Update taskbar and drawer badges
+      const badgeTaskbar = document.getElementById('taskbar-activity-badge');
+      if (badgeTaskbar) {
+        badgeTaskbar.textContent = totalCount;
+        badgeTaskbar.style.display = totalCount > 0 ? 'inline-block' : 'none';
       }
+      const badgeDrawer = document.getElementById('drawer-checklist-badge');
+      if (badgeDrawer) {
+        badgeDrawer.textContent = totalCount;
+        badgeDrawer.style.display = totalCount > 0 ? 'inline-block' : 'none';
+      }
+
+      // Update Checklist Tab Labels
+      const txtAll = document.getElementById('txt-checklist-all-count') || document.getElementById('txt-history-checked-count');
+      if (txtAll) txtAll.textContent = `All Tracked (${totalCount})`;
+
+      const txtApplied = document.getElementById('txt-checklist-applied-count');
+      if (txtApplied) txtApplied.textContent = `Applied Jobs (${appliedCount})`;
+
+      const txtLi = document.getElementById('txt-checklist-linkedin-count');
+      if (txtLi) txtLi.textContent = `LinkedIn Posted (${linkedinCount})`;
+
+      const txtWa = document.getElementById('txt-checklist-whatsapp-count');
+      if (txtWa) txtWa.textContent = `WhatsApp Shared (${whatsappCount})`;
+
+      const txtArchive = document.getElementById('txt-history-archive-count');
+      if (txtArchive) txtArchive.textContent = `All Scraped Archive (${archiveCount})`;
+
+      const txtQueries = document.getElementById('txt-history-queries-count');
+      if (txtQueries) txtQueries.textContent = `Search Queries (${queriesCount})`;
+
       updateScrapedBadges();
     }
   };
@@ -687,9 +849,11 @@ const App = (() => {
 
   /**
    * Render Single Job Card HTML (Used in Home Feed & Search Now results)
-   * Includes checkbox tick button, category badge, WhatsApp and LinkedIn buttons
+   * Includes checkbox tick button, category badge, exact LinkedIn button, WhatsApp, and Apply link
    */
   function renderSingleJobCard(job) {
+    const isApplied = JobHistoryManager.isApplied(job.id);
+    const isLinkedInPosted = JobHistoryManager.isLinkedInPosted(job.id);
     const isShared = WhatsAppManager.isJobSent(job.id);
     const isChecked = JobHistoryManager.isChecked(job.id);
     const isLinkedIn = isLinkedInJob(job);
@@ -703,15 +867,15 @@ const App = (() => {
     const wpIcon = isWpRemote ? 'icon-wifi' : (isWpHybrid ? 'icon-building' : 'icon-map-pin');
 
     return `
-      <article class="job-card ${isShared ? 'is-shared' : ''} ${isChecked ? 'is-checked' : ''}" id="card-${escapeHtml(job.id)}" data-job-id="${escapeHtml(job.id)}">
+      <article class="job-card ${isApplied ? 'is-applied' : ''} ${isShared ? 'is-shared' : ''} ${isChecked ? 'is-checked' : ''}" id="card-${escapeHtml(job.id)}" data-job-id="${escapeHtml(job.id)}">
         <div class="job-card-header">
           <div class="job-header-left">
-            <button type="button" class="job-checkbox-btn ${isChecked ? 'is-checked' : ''}"
-                    onclick="event.stopPropagation(); App.toggleJobChecked('${escapeHtml(job.id)}', event)"
-                    title="${isChecked ? 'Checked (saved to History & moved down)' : 'Mark job as checked / sent'}"
-                    aria-label="${isChecked ? 'Uncheck job' : 'Check job'}">
-              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${isChecked ? 'icon-check-square' : 'icon-square'}"></use></svg>
-              <span class="btn-check-label">${isChecked ? 'Checked' : 'Mark Done'}</span>
+            <button type="button" class="job-tickbox-btn ${isApplied ? 'is-ticked is-applied' : ''}"
+                    onclick="event.stopPropagation(); App.toggleJobApplied('${escapeHtml(job.id)}', event)"
+                    title="${isApplied ? 'Applied (Click to uncheck)' : 'Mark as Applied'}"
+                    aria-label="${isApplied ? 'Uncheck applied job' : 'Mark job as applied'}">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${isApplied ? 'icon-check-square' : 'icon-square'}"></use></svg>
+              <span class="btn-tick-label">${isApplied ? 'Applied' : 'Mark Applied'}</span>
             </button>
             <span class="job-category-badge ${catBadgeClass}">
               <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#${job.iconId || 'icon-briefcase'}"></use></svg>
@@ -721,17 +885,26 @@ const App = (() => {
           <span class="job-posted-time">${escapeHtml(job.posted_date || 'Recent')}</span>
         </div>
 
-        ${isChecked ? `
-          <div class="job-checked-ribbon">
-            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
-            <span>Saved in Checked History</span>
-          </div>
-        ` : (isShared ? `
-          <div class="job-shared-ribbon">
-            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
-            <span>Shared to WhatsApp</span>
-          </div>
-        ` : '')}
+        <div class="job-ribbons-wrap">
+          ${isApplied ? `
+            <div class="job-applied-ribbon">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+              <span>✓ Applied</span>
+            </div>
+          ` : ''}
+          ${isLinkedInPosted ? `
+            <div class="job-linkedin-ribbon">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+              <span>in LinkedIn Posted</span>
+            </div>
+          ` : ''}
+          ${isShared ? `
+            <div class="job-shared-ribbon">
+              <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+              <span>Shared to WhatsApp</span>
+            </div>
+          ` : ''}
+        </div>
 
         <h3 class="job-card-title">${escapeHtml(job.title)}</h3>
 
@@ -768,16 +941,22 @@ const App = (() => {
         </div>
 
         <div class="job-actions-row">
+          <!-- Exact LinkedIn Button -->
+          <button class="btn-share-linkedin" onclick="App.handleLinkedInPost('${escapeHtml(job.id)}')">
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+            <span>${isLinkedInPosted ? 'LinkedIn Posted' : 'LinkedIn Post'}</span>
+          </button>
+
           <!-- WhatsApp Button -->
           <button class="btn-share-whatsapp" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
             <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
             <span>${isShared ? 'Shared' : 'WhatsApp'}</span>
           </button>
 
-          <!-- LinkedIn / Website Button (Matching Size and Exact Design) -->
+          <!-- Apply / Website Button -->
           <button class="btn-action-platform" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
-            <svg class="svg-icon" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
-            <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
+            <svg class="svg-icon" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-external-link'}"></use></svg>
+            <span>${isLinkedIn ? 'LinkedIn Job' : 'Apply Link'}</span>
           </button>
         </div>
       </article>
@@ -785,78 +964,166 @@ const App = (() => {
   }
 
   /**
-   * Toggle Job Checked Status in-place without removing card from screen
+   * Toggle Job Applied Status in-place
    */
-  function toggleJobChecked(jobId, event) {
+  function toggleJobApplied(jobId, event) {
     if (event) {
       event.stopPropagation();
       event.preventDefault();
     }
     const job = allJobs.find(j => j.id === jobId) || JobHistoryManager.getFetchedArchive().find(j => j.id === jobId);
-    const nowChecked = JobHistoryManager.toggleChecked(jobId, job);
+    const nowApplied = JobHistoryManager.toggleApplied(jobId, job);
 
-    // Update ALL instances of this job card in DOM in-place
-    const cards = document.querySelectorAll(`article.job-card[data-job-id="${jobId}"], #card-${jobId}`);
-    cards.forEach(card => {
-      const btn = card.querySelector('.job-checkbox-btn');
-      const label = card.querySelector('.btn-check-label');
-      const svgUse = btn ? btn.querySelector('use') : null;
-
-      if (nowChecked) {
-        card.classList.add('is-checked');
-        if (btn) {
-          btn.classList.add('is-checked');
-          btn.title = 'Checked (will be hidden from fresh feed on refresh)';
-          btn.setAttribute('aria-label', 'Uncheck job');
-        }
-        if (label) label.textContent = 'Checked';
-        if (svgUse) svgUse.setAttribute('href', '#icon-check-square');
-
-        let ribbon = card.querySelector('.job-checked-ribbon');
-        if (!ribbon) {
-          ribbon = document.createElement('div');
-          ribbon.className = 'job-checked-ribbon';
-          ribbon.innerHTML = `
-            <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
-            <span>Saved in Checked History</span>
-          `;
-          const title = card.querySelector('.job-card-title');
-          if (title) {
-            card.insertBefore(ribbon, title);
-          }
-        }
-      } else {
-        card.classList.remove('is-checked');
-        if (btn) {
-          btn.classList.remove('is-checked');
-          btn.title = 'Mark job as checked / sent';
-          btn.setAttribute('aria-label', 'Check job');
-        }
-        if (label) label.textContent = 'Mark Done';
-        if (svgUse) svgUse.setAttribute('href', '#icon-square');
-
-        const ribbon = card.querySelector('.job-checked-ribbon');
-        if (ribbon) ribbon.remove();
-      }
-    });
-
+    updateCardStatusInDOM(jobId);
     JobHistoryManager.updateHistoryBadge();
 
-    if (nowChecked) {
-      showToast('Job marked checked - moved to bottom');
+    if (nowApplied) {
+      showToast('✓ Added to Applied Jobs! Saved in Checklist.');
     } else {
-      showToast('Job unchecked - restored to fresh feed');
+      showToast('Job removed from Applied Jobs & restored to fresh feed.');
     }
 
-    if (currentView === 'home') {
-      renderJobFeed();
-    } else if (currentView === 'scraped') {
-      renderScrapedJobs();
-    } else if (currentView === 'activity') {
+    if (currentView === 'activity') {
       renderActivityLog();
-    } else if (currentView === 'search-now') {
-      renderSearchResults();
     }
+  }
+
+  function toggleJobChecked(jobId, event) {
+    return toggleJobApplied(jobId, event);
+  }
+
+  /**
+   * 1-Click LinkedIn Caption Generator: Formats pre-formed post, copies to clipboard,
+   * marks as posted in tracking system, and opens preview modal.
+   */
+  function handleLinkedInPost(jobId) {
+    const job = allJobs.find(j => j.id === jobId) || JobHistoryManager.getFetchedArchive().find(j => j.id === jobId);
+    if (!job) return;
+
+    const caption = LinkedInManager.formatPost(job);
+    LinkedInManager.copyToClipboard(caption);
+    LinkedInManager.recordPostedJob(job, caption);
+    JobHistoryManager.markLinkedInPosted(jobId, job);
+
+    updateCardStatusInDOM(jobId);
+    JobHistoryManager.updateHistoryBadge();
+
+    showToast('✓ LinkedIn post caption copied to clipboard!');
+    openLinkedInPreviewModal(job, caption);
+  }
+
+  function openLinkedInPreviewModal(job, caption) {
+    const modal = document.getElementById('modal-linkedin-preview');
+    if (!modal) return;
+
+    const textarea = document.getElementById('li-modal-textarea');
+    const jobRef = document.getElementById('li-modal-job-ref');
+    const btnCopy = document.getElementById('btn-modal-copy-caption');
+    const btnOpenFeed = document.getElementById('btn-modal-open-feed');
+    const btnOpenApply = document.getElementById('btn-modal-open-apply');
+    const btnClose = document.getElementById('btn-close-li-modal');
+    const txtCopyLabel = document.getElementById('txt-modal-copy-label');
+
+    if (textarea) textarea.value = caption;
+    if (jobRef) jobRef.textContent = `${job.title} • ${job.company}`;
+    if (txtCopyLabel) txtCopyLabel.textContent = 'Copy Caption';
+
+    if (btnCopy) {
+      btnCopy.onclick = async () => {
+        const textToCopy = textarea ? textarea.value : caption;
+        await LinkedInManager.copyToClipboard(textToCopy);
+        if (txtCopyLabel) txtCopyLabel.textContent = '✓ Copied!';
+        showToast('Caption copied to clipboard!');
+        setTimeout(() => {
+          if (txtCopyLabel) txtCopyLabel.textContent = 'Copy Caption';
+        }, 2000);
+      };
+    }
+
+    if (btnOpenFeed) {
+      btnOpenFeed.onclick = () => {
+        window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank', 'noopener,noreferrer');
+      };
+    }
+
+    if (btnOpenApply) {
+      btnOpenApply.onclick = () => {
+        window.open(job.job_link, '_blank', 'noopener,noreferrer');
+      };
+    }
+
+    if (btnClose) {
+      btnClose.onclick = () => {
+        modal.classList.remove('is-open');
+      };
+    }
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('is-open');
+      }
+    };
+
+    modal.classList.add('is-open');
+  }
+
+  function updateCardStatusInDOM(jobId) {
+    const isApplied = JobHistoryManager.isApplied(jobId);
+    const isLinkedInPosted = JobHistoryManager.isLinkedInPosted(jobId);
+    const isShared = WhatsAppManager.isJobSent(jobId);
+    const isChecked = JobHistoryManager.isChecked(jobId);
+
+    const cards = document.querySelectorAll(`article.job-card[data-job-id="${jobId}"], #card-${jobId}`);
+    cards.forEach(card => {
+      card.classList.toggle('is-applied', isApplied);
+      card.classList.toggle('is-checked', isChecked);
+
+      const btn = card.querySelector('.job-tickbox-btn, .job-checkbox-btn');
+      if (btn) {
+        btn.classList.toggle('is-ticked', isApplied);
+        btn.classList.toggle('is-applied', isApplied);
+        btn.title = isApplied ? 'Applied (Click to uncheck)' : 'Mark as Applied';
+        btn.setAttribute('aria-label', isApplied ? 'Uncheck applied job' : 'Mark job as applied');
+        const label = btn.querySelector('.btn-tick-label, .btn-check-label');
+        if (label) label.textContent = isApplied ? 'Applied' : 'Mark Applied';
+        const useEl = btn.querySelector('use');
+        if (useEl) useEl.setAttribute('href', isApplied ? '#icon-check-square' : '#icon-square');
+      }
+
+      let ribbonsWrap = card.querySelector('.job-ribbons-wrap');
+      if (!ribbonsWrap) {
+        ribbonsWrap = document.createElement('div');
+        ribbonsWrap.className = 'job-ribbons-wrap';
+        const title = card.querySelector('.job-card-title');
+        if (title) card.insertBefore(ribbonsWrap, title);
+      }
+
+      ribbonsWrap.innerHTML = `
+        ${isApplied ? `
+          <div class="job-applied-ribbon">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+            <span>✓ Applied</span>
+          </div>
+        ` : ''}
+        ${isLinkedInPosted ? `
+          <div class="job-linkedin-ribbon">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+            <span>in LinkedIn Posted</span>
+          </div>
+        ` : ''}
+        ${isShared ? `
+          <div class="job-shared-ribbon">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+            <span>Shared to WhatsApp</span>
+          </div>
+        ` : ''}
+      `;
+
+      const liBtnSpan = card.querySelector('.btn-share-linkedin span');
+      if (liBtnSpan) {
+        liBtnSpan.textContent = isLinkedInPosted ? 'LinkedIn Posted' : 'LinkedIn Post';
+      }
+    });
   }
 
   function getBadgeClass(primary, subCategoryId) {
@@ -1623,14 +1890,64 @@ const App = (() => {
   }
 
   function switchHistoryTab(tabName) {
-    currentHistoryTab = ['archive', 'queries'].includes(tabName) ? tabName : 'checked';
-    const tabChecked = document.getElementById('tab-history-checked');
+    const validTabs = ['all', 'applied', 'linkedin', 'whatsapp', 'archive', 'queries'];
+    currentHistoryTab = validTabs.includes(tabName) ? tabName : 'all';
+
+    // Update tab pills
+    const tabs = ['all', 'applied', 'linkedin', 'whatsapp'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-checklist-${t}`);
+      if (btn) btn.classList.toggle('active', currentHistoryTab === t);
+    });
     const tabArchive = document.getElementById('tab-history-archive');
     const tabQueries = document.getElementById('tab-history-queries');
-    if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
     if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
     if (tabQueries) tabQueries.classList.toggle('active', currentHistoryTab === 'queries');
+
     renderActivityLog();
+  }
+
+  function exportChecklistCsv() {
+    const tracked = JobHistoryManager.getAllTrackedJobs();
+    if (tracked.length === 0) {
+      showToast('No tracked jobs to export yet');
+      return;
+    }
+
+    const headers = ['Title', 'Company', 'Location', 'Workplace', 'Salary', 'Category', 'Job Link', 'Status', 'Date Tracked'];
+    const rows = tracked.map(job => {
+      const isApp = JobHistoryManager.isApplied(job.id);
+      const isLi = JobHistoryManager.isLinkedInPosted(job.id);
+      const isWa = JobHistoryManager.isWhatsAppShared(job.id);
+      const statuses = [];
+      if (isApp) statuses.push('Applied');
+      if (isLi) statuses.push('LinkedIn Posted');
+      if (isWa) statuses.push('WhatsApp Shared');
+
+      return [
+        `"${(job.title || '').replace(/"/g, '""')}"`,
+        `"${(job.company || '').replace(/"/g, '""')}"`,
+        `"${(job.location || '').replace(/"/g, '""')}"`,
+        `"${(job.workplace_type || '').replace(/"/g, '""')}"`,
+        `"${(job.salary || '').replace(/"/g, '""')}"`,
+        `"${(job.subCategory || job.primaryCategory || '').replace(/"/g, '""')}"`,
+        `"${(job.job_link || '').replace(/"/g, '""')}"`,
+        `"${statuses.join('; ')}"`,
+        `"${job.formattedAppliedAt || job.formattedCheckedAt || ''}"`
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `job_checklist_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Checklist exported as CSV');
   }
 
   function clearCheckedHistory() {
@@ -1642,11 +1959,12 @@ const App = (() => {
     renderActivityLog();
     renderJobFeed();
     renderScrapedJobs();
-    showToast('Checked history cleared. Jobs restored to fresh feed.');
+    showToast('Checklist cleared. Jobs restored to fresh feed.');
   }
 
   function uncheckJob(jobId) {
     JobHistoryManager.uncheck(jobId);
+    updateCardStatusInDOM(jobId);
     renderActivityLog();
     renderJobFeed();
     renderScrapedJobs();
@@ -1654,11 +1972,14 @@ const App = (() => {
   }
 
   /**
-   * Render Job History & Checked View (View 4)
-   * Supports three distinct tabs:
-   * 1. Checked Jobs: Openings reviewed, sent to WhatsApp, or ticked by user
-   * 2. All Scraped Archive: All openings ever fetched by scraper or Search Now
-   * 3. Search Queries: Historical search queries run in Search Now (relocated from Search Now)
+   * Render Job Checklist & Tracking View (View 4)
+   * Supports checklist tabs:
+   * 1. All Tracked: All jobs applied, LinkedIn posted, or WhatsApp shared
+   * 2. Applied Jobs: Openings ticked by user
+   * 3. LinkedIn Posted: Openings where LinkedIn post caption was generated/copied
+   * 4. WhatsApp Shared: Openings dispatched to WhatsApp
+   * 5. All Scraped Archive: All openings ever fetched by scraper or Search Now
+   * 6. Search Queries: Historical search queries run in Search Now
    */
   function renderActivityLog() {
     const listContainer = document.getElementById('activity-log-list');
@@ -1666,54 +1987,107 @@ const App = (() => {
 
     JobHistoryManager.updateHistoryBadge();
 
-    const tabChecked = document.getElementById('tab-history-checked');
+    const tabs = ['all', 'applied', 'linkedin', 'whatsapp'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-checklist-${t}`);
+      if (btn) btn.classList.toggle('active', currentHistoryTab === t);
+    });
     const tabArchive = document.getElementById('tab-history-archive');
     const tabQueries = document.getElementById('tab-history-queries');
-    if (tabChecked) tabChecked.classList.toggle('active', currentHistoryTab === 'checked');
     if (tabArchive) tabArchive.classList.toggle('active', currentHistoryTab === 'archive');
     if (tabQueries) tabQueries.classList.toggle('active', currentHistoryTab === 'queries');
 
-    if (currentHistoryTab === 'checked') {
-      const checkedJobs = JobHistoryManager.getCheckedJobs();
-      if (checkedJobs.length === 0) {
+    // Checklist tabs: 'all', 'applied', 'linkedin', 'whatsapp'
+    if (['all', 'applied', 'linkedin', 'whatsapp', 'checked'].includes(currentHistoryTab)) {
+      let trackedJobs = [];
+      let emptyMsg = '';
+
+      if (currentHistoryTab === 'applied') {
+        trackedJobs = JobHistoryManager.getAppliedJobs();
+        emptyMsg = 'No Applied Jobs Yet. Click the tick box on any job card to mark it as applied.';
+      } else if (currentHistoryTab === 'linkedin') {
+        trackedJobs = JobHistoryManager.getLinkedInJobs();
+        emptyMsg = 'No LinkedIn Postings Yet. Click the LinkedIn Post button on any job card to generate and copy a formatted caption.';
+      } else if (currentHistoryTab === 'whatsapp') {
+        trackedJobs = JobHistoryManager.getWhatsAppJobs();
+        emptyMsg = 'No WhatsApp Shared Jobs Yet. Click the WhatsApp button on any job card to share.';
+      } else {
+        trackedJobs = JobHistoryManager.getAllTrackedJobs();
+        emptyMsg = 'No Tracked Jobs in Checklist. Mark jobs as applied or copy LinkedIn captions to track them here.';
+      }
+
+      if (trackedJobs.length === 0) {
         listContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">
               <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
             </div>
-            <h3>No Checked Jobs Yet</h3>
-            <p>Tick the checkbox on any job card to save it here and avoid seeing repetitive postings on refresh.</p>
+            <h3>Checklist Empty</h3>
+            <p>${emptyMsg}</p>
           </div>
         `;
         return;
       }
 
-      listContainer.innerHTML = checkedJobs.map(job => {
+      listContainer.innerHTML = trackedJobs.map(job => {
         const isLinkedIn = isLinkedInJob(job);
+        const isApp = JobHistoryManager.isApplied(job.id);
+        const isLi = JobHistoryManager.isLinkedInPosted(job.id);
+        const isWa = JobHistoryManager.isWhatsAppShared(job.id);
+
         return `
-          <div class="activity-item" id="hist-item-${escapeHtml(job.id)}">
-            <div class="activity-top">
-              <h4 class="activity-title">${escapeHtml(job.title)}</h4>
-              <span class="activity-timestamp">${escapeHtml(job.formattedCheckedAt || 'Recently Checked')}</span>
+          <div class="checklist-item" id="chk-item-${escapeHtml(job.id)}">
+            <div class="checklist-item-header">
+              <div class="checklist-item-title-row">
+                <!-- Interactive Tickbox: uncheck directly -->
+                <button type="button"
+                        class="checklist-checkbox-btn"
+                        onclick="App.uncheckJob('${escapeHtml(job.id)}')"
+                        title="Click to uncheck job and restore to fresh feed"
+                        aria-label="Uncheck job">
+                  <svg class="svg-icon" viewBox="0 0 24 24" style="width: 22px; height: 22px; stroke: #10B981; color: #10B981;"><use href="#icon-check-square"></use></svg>
+                </button>
+                <div>
+                  <h4 class="activity-title" style="margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 800;">${escapeHtml(job.title)}</h4>
+                  <span class="activity-timestamp">${escapeHtml(job.formattedAppliedAt || job.formattedLinkedInAt || job.formattedCheckedAt || 'Tracked')}</span>
+                </div>
+              </div>
+              <div class="checklist-tags-row">
+                ${isApp ? `<span class="job-applied-ribbon"><svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg><span>✓ Applied</span></span>` : ''}
+                ${isLi ? `<span class="job-linkedin-ribbon"><svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg><span>in LinkedIn</span></span>` : ''}
+                ${isWa ? `<span class="job-shared-ribbon"><svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg><span>WhatsApp</span></span>` : ''}
+              </div>
             </div>
+
             <div class="activity-meta">
               <span><strong>Company:</strong> ${escapeHtml(job.company)}</span>
               <span><strong>Location:</strong> ${escapeHtml(job.location || 'Open')}</span>
-              <span><strong>Category:</strong> ${escapeHtml(job.subCategory || job.primaryCategory || 'Engineering')}</span>
+              ${job.salary ? `<span><strong>Salary:</strong> ${escapeHtml(job.salary)}</span>` : ''}
+              <span><strong>Category:</strong> ${escapeHtml(job.subCategory || job.primaryCategory || 'General')}</span>
             </div>
+
             ${job.description ? `<div class="activity-snippet">${escapeHtml(job.description.substring(0, 140))}...</div>` : ''}
+
             <div class="activity-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <!-- 1-Click LinkedIn Post Button -->
+              <button class="btn-share-linkedin" style="height: 36px; font-size: 0.8rem; padding: 0 12px; flex: initial;" onclick="App.handleLinkedInPost('${escapeHtml(job.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+                <span>LinkedIn Post</span>
+              </button>
+
               <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
                 <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
                 <span>WhatsApp</span>
               </button>
+
               <button class="btn-sm-action" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
-                <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-external-link'}"></use></svg>
+                <span>${isLinkedIn ? 'LinkedIn Job' : 'Apply Link'}</span>
               </button>
+
               <button class="btn-uncheck-action" onclick="App.uncheckJob('${escapeHtml(job.id)}')">
                 <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
-                <span>Restore to Feed</span>
+                <span>Uncheck</span>
               </button>
             </div>
           </div>
@@ -1738,6 +2112,9 @@ const App = (() => {
       listContainer.innerHTML = archive.map(job => {
         const isLinkedIn = isLinkedInJob(job);
         const isChecked = JobHistoryManager.isChecked(job.id);
+        const isApp = JobHistoryManager.isApplied(job.id);
+        const isLi = JobHistoryManager.isLinkedInPosted(job.id);
+
         return `
           <div class="activity-item">
             <div class="activity-top">
@@ -1747,26 +2124,30 @@ const App = (() => {
             <div class="activity-meta">
               <span><strong>Company:</strong> ${escapeHtml(job.company)}</span>
               <span><strong>Platform:</strong> ${escapeHtml(job.platform || (isLinkedIn ? 'LinkedIn' : 'Web'))}</span>
-              <span><strong>Status:</strong> ${isChecked ? 'Checked' : 'Fresh'}</span>
+              <span><strong>Status:</strong> ${isApp ? 'Applied' : (isLi ? 'LinkedIn Posted' : (isChecked ? 'Tracked' : 'Fresh'))}</span>
             </div>
             <div class="activity-actions" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-share-linkedin" style="height: 36px; font-size: 0.8rem; padding: 0 12px; flex: initial;" onclick="App.handleLinkedInPost('${escapeHtml(job.id)}')">
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-linkedin"></use></svg>
+                <span>LinkedIn Post</span>
+              </button>
               <button class="btn-sm-action" onclick="App.handleShareJob('${escapeHtml(job.id)}')">
                 <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
                 <span>WhatsApp</span>
               </button>
               <button class="btn-sm-action" onclick="App.handleOpenJobLink('${escapeHtml(job.job_link)}', ${isLinkedIn})">
-                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-globe'}"></use></svg>
+                <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="${isLinkedIn ? '#icon-linkedin' : '#icon-external-link'}"></use></svg>
                 <span>${isLinkedIn ? 'LinkedIn' : 'Website'}</span>
               </button>
               ${isChecked ? `
                 <button class="btn-uncheck-action" onclick="App.uncheckJob('${escapeHtml(job.id)}')">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
-                  <span>Restore</span>
+                  <span>Uncheck</span>
                 </button>
               ` : `
-                <button class="btn-sm-action" onclick="App.toggleJobChecked('${escapeHtml(job.id)}', event)">
+                <button class="btn-sm-action" onclick="App.toggleJobApplied('${escapeHtml(job.id)}', event)">
                   <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-square"></use></svg>
-                  <span>Mark Done</span>
+                  <span>Mark Applied</span>
                 </button>
               `}
             </div>
@@ -1905,6 +2286,82 @@ const App = (() => {
       });
     }
 
+    // =========================================================================
+    // LinkedIn Settings Initialization & Live Preview
+    // =========================================================================
+    const inputLiHeading = document.getElementById('setting-li-heading');
+    const inputLiHashtags = document.getElementById('setting-li-hashtags');
+    const inputLiSig = document.getElementById('setting-li-signature');
+    const inputLiTemplate = document.getElementById('setting-li-template');
+    const btnSaveLi = document.getElementById('btn-save-li-settings');
+    const btnResetLi = document.getElementById('btn-reset-li-settings');
+
+    if (inputLiHeading && typeof LinkedInManager !== 'undefined') inputLiHeading.value = LinkedInManager.getHeading();
+    if (inputLiHashtags && typeof LinkedInManager !== 'undefined') inputLiHashtags.value = LinkedInManager.getHashtags();
+    if (inputLiSig && typeof LinkedInManager !== 'undefined') inputLiSig.value = LinkedInManager.getSignature();
+    if (inputLiTemplate && typeof LinkedInManager !== 'undefined') inputLiTemplate.value = LinkedInManager.getTemplate();
+
+    [inputLiHeading, inputLiHashtags, inputLiSig, inputLiTemplate].forEach(el => {
+      if (el) {
+        el.addEventListener('input', updateLinkedInLivePreview);
+      }
+    });
+
+    // Preset Heading chips
+    document.querySelectorAll('.heading-preset-badge').forEach(badge => {
+      badge.addEventListener('click', () => {
+        const heading = badge.dataset.heading;
+        if (inputLiHeading && heading) {
+          inputLiHeading.value = heading;
+          updateLinkedInLivePreview();
+        }
+      });
+    });
+
+    // Dynamic token badges for LinkedIn
+    document.querySelectorAll('.li-token-badge').forEach(badge => {
+      badge.addEventListener('click', () => {
+        const token = badge.dataset.token;
+        if (inputLiTemplate && token) {
+          const start = inputLiTemplate.selectionStart;
+          const end = inputLiTemplate.selectionEnd;
+          const val = inputLiTemplate.value;
+          inputLiTemplate.value = val.substring(0, start) + token + val.substring(end);
+          inputLiTemplate.focus();
+          inputLiTemplate.selectionStart = inputLiTemplate.selectionEnd = start + token.length;
+          updateLinkedInLivePreview();
+        }
+      });
+    });
+
+    if (btnSaveLi) {
+      btnSaveLi.addEventListener('click', () => {
+        if (typeof LinkedInManager !== 'undefined') {
+          if (inputLiHeading) LinkedInManager.setHeading(inputLiHeading.value);
+          if (inputLiHashtags) LinkedInManager.setHashtags(inputLiHashtags.value);
+          if (inputLiSig) LinkedInManager.setSignature(inputLiSig.value);
+          if (inputLiTemplate) LinkedInManager.setTemplate(inputLiTemplate.value);
+          showToast('LinkedIn settings saved successfully');
+        }
+      });
+    }
+
+    if (btnResetLi) {
+      btnResetLi.addEventListener('click', () => {
+        if (confirm('Reset LinkedIn heading, template, signature, and hashtags to default settings?')) {
+          if (typeof LinkedInManager !== 'undefined') {
+            LinkedInManager.resetDefaults();
+            if (inputLiHeading) inputLiHeading.value = LinkedInManager.getHeading();
+            if (inputLiHashtags) inputLiHashtags.value = LinkedInManager.getHashtags();
+            if (inputLiSig) inputLiSig.value = LinkedInManager.getSignature();
+            if (inputLiTemplate) inputLiTemplate.value = LinkedInManager.getTemplate();
+            updateLinkedInLivePreview();
+            showToast('LinkedIn settings restored to defaults');
+          }
+        }
+      });
+    }
+
     if (btnPwaInstall) {
       btnPwaInstall.addEventListener('click', () => {
         if (typeof PwaManager !== 'undefined') {
@@ -1914,6 +2371,7 @@ const App = (() => {
     }
 
     updateLivePreview();
+    updateLinkedInLivePreview();
   }
 
   function updateShareModeUI() {
@@ -1953,6 +2411,35 @@ const App = (() => {
     const customSignature = inputSignature ? inputSignature.value : null;
 
     const formatted = WhatsAppManager.formatMessage(sampleJob, customTemplate, customSignature);
+    previewContainer.textContent = formatted;
+  }
+
+  function updateLinkedInLivePreview() {
+    const previewContainer = document.getElementById('settings-li-live-preview');
+    if (!previewContainer || typeof LinkedInManager === 'undefined') return;
+
+    const inputHeading = document.getElementById('setting-li-heading');
+    const inputHashtags = document.getElementById('setting-li-hashtags');
+    const inputSig = document.getElementById('setting-li-signature');
+    const inputTemplate = document.getElementById('setting-li-template');
+
+    const sampleJob = (allJobs && allJobs.length > 0) ? allJobs[0] : {
+      company: 'Fluence International, Inc.',
+      title: 'Full-Stack Developer',
+      location: 'Worldwide',
+      workplace_type: 'Remote',
+      job_type: 'Contract',
+      experience: 'Verified Remote',
+      salary: '$3.5k - $5k/month',
+      job_link: 'https://remotive.com/remote-jobs/software-development/full-stack-developer-2091165'
+    };
+
+    const customHeading = inputHeading ? inputHeading.value : null;
+    const customHashtags = inputHashtags ? inputHashtags.value : null;
+    const customSig = inputSig ? inputSig.value : null;
+    const customTemplate = inputTemplate ? inputTemplate.value : null;
+
+    const formatted = LinkedInManager.formatPost(sampleJob, customTemplate, customHeading, customSig, customHashtags);
     previewContainer.textContent = formatted;
   }
 
@@ -2519,10 +3006,15 @@ const App = (() => {
     openDrawer,
     closeDrawer,
     handleShareJob,
+    handleLinkedInPost,
+    openLinkedInPreviewModal,
     handleOpenJobLink,
+    toggleJobApplied,
     toggleJobChecked,
     uncheckJob,
+    exportChecklistCsv,
     clearCheckedHistory,
+    clearAllChecklist: clearCheckedHistory,
     switchHistoryTab,
     JobHistoryManager,
     filterByCategoryRule,

@@ -10,6 +10,7 @@ const PRECACHE_ASSETS = [
   './js/app.js',
   './js/sorter.js',
   './js/whatsapp.js',
+  './js/linkedin.js',
   './js/sw-register.js',
   './data/jobs.json',
   './manifest.json',

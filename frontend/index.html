@@ -105,6 +105,11 @@
       <rect x="2" y="9" width="4" height="12"></rect>
       <circle cx="4" cy="4" r="2"></circle>
     </symbol>
+    <!-- Copy to Clipboard Icon -->
+    <symbol id="icon-copy" viewBox="0 0 24 24">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+    </symbol>
     <!-- Globe / Website Icon for Non-LinkedIn Jobs -->
     <symbol id="icon-globe" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="10"></circle>
@@ -396,9 +401,10 @@
         <span>Categories & Domains</span>
       </button>
 
-      <button class="drawer-link" data-view="activity">
+      <button class="drawer-link" data-view="activity" id="drawer-link-checklist">
         <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
-        <span>History & Checked</span>
+        <span>Checklist & Applied Jobs</span>
+        <span class="drawer-badge" id="drawer-checklist-badge" style="display: none;">0</span>
       </button>
 
       <button class="drawer-link" data-view="settings">
@@ -842,26 +848,42 @@
       </div>
     </section>
 
-    <!-- VIEW 4: JOB HISTORY & CHECKED -->
+    <!-- VIEW 4: JOB CHECKLIST & APPLIED TRACKING -->
     <section class="view-section" id="view-activity">
       <div class="activity-header-actions">
         <div class="section-header" style="margin-bottom: 0;">
-          <h2>Job History & Checked</h2>
-          <p>Archive of all reviewed, checked, WhatsApp-sent, and fetched openings.</p>
+          <h2>Job Checklist & Applied Tracking</h2>
+          <p>Track your applied jobs, LinkedIn shared postings, and review status. Check or uncheck anytime to organize your workflow.</p>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" onclick="if(confirm('Clear checked history? (Jobs will reappear in fresh feed)')) App.clearCheckedHistory();">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-secondary" onclick="App.exportChecklistCsv()" title="Export checklist as CSV">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-download"></use></svg>
+            <span>Export CSV</span>
+          </button>
+          <button class="btn-secondary" onclick="if(confirm('Clear all checked jobs? They will be restored to the fresh feed.')) App.clearCheckedHistory();">
             <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-trash"></use></svg>
             <span>Clear Checked</span>
           </button>
         </div>
       </div>
 
-      <!-- History Navigation Tabs: Checked vs All Historical Scraped vs Search Queries -->
-      <div class="history-tabs-row" style="display: flex; gap: 10px; margin: 14px 0 16px; flex-wrap: wrap;">
-        <button class="sub-pill active" id="tab-history-checked" onclick="App.switchHistoryTab('checked')">
+      <!-- Checklist Filter Tabs: All Tracked vs Applied vs LinkedIn Posted vs WhatsApp Shared vs Scraped Archive -->
+      <div class="history-tabs-row" style="display: flex; gap: 8px; margin: 14px 0 16px; flex-wrap: wrap;">
+        <button class="sub-pill active" id="tab-checklist-all" onclick="App.switchHistoryTab('all')">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
-          <span id="txt-history-checked-count">Checked Jobs (0)</span>
+          <span id="txt-checklist-all-count">All Tracked (0)</span>
+        </button>
+        <button class="sub-pill" id="tab-checklist-applied" onclick="App.switchHistoryTab('applied')">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check-circle"></use></svg>
+          <span id="txt-checklist-applied-count">Applied Jobs (0)</span>
+        </button>
+        <button class="sub-pill" id="tab-checklist-linkedin" onclick="App.switchHistoryTab('linkedin')">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #0A66C2;"><use href="#icon-linkedin"></use></svg>
+          <span id="txt-checklist-linkedin-count">LinkedIn Posted (0)</span>
+        </button>
+        <button class="sub-pill" id="tab-checklist-whatsapp" onclick="App.switchHistoryTab('whatsapp')">
+          <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-whatsapp"></use></svg>
+          <span id="txt-checklist-whatsapp-count">WhatsApp Shared (0)</span>
         </button>
         <button class="sub-pill" id="tab-history-archive" onclick="App.switchHistoryTab('archive')">
           <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-database"></use></svg>
@@ -1021,6 +1043,82 @@
           </button>
         </div>
       </div>
+
+      <!-- LinkedIn Post & Caption Generation Settings -->
+      <div class="settings-group">
+        <div class="settings-group-title">
+          <svg class="svg-icon" viewBox="0 0 24 24" style="stroke: #0A66C2; color: #0A66C2;"><use href="#icon-linkedin"></use></svg>
+          <span>LinkedIn Post & Caption Settings</span>
+        </div>
+        <p class="settings-group-desc">
+          Customize the pre-formed LinkedIn post caption created when clicking the LinkedIn button on each job card. Features professional emojis, line spacing, and auto-omission of missing fields (e.g. salary when unmentioned).
+        </p>
+
+        <div class="form-field">
+          <label class="form-label" for="setting-li-heading">LinkedIn Post Heading / Alert Banner</label>
+          <input type="text" id="setting-li-heading" class="form-input" placeholder="🚨 JOB POST ALERT 🚨" value="🚨 JOB POST ALERT 🚨">
+          <div class="template-tokens-help" style="margin-top: 6px;">
+            <span style="font-size: 0.74rem; font-weight: 700; width: 100%;">Quick Presets:</span>
+            <span class="token-badge heading-preset-badge" data-heading="🚨 JOB POST ALERT 🚨">🚨 JOB POST ALERT 🚨</span>
+            <span class="token-badge heading-preset-badge" data-heading="🚀 WE ARE HIRING 🚀">🚀 WE ARE HIRING 🚀</span>
+            <span class="token-badge heading-preset-badge" data-heading="📢 NEW JOB OPENING 📢">📢 NEW JOB OPENING 📢</span>
+            <span class="token-badge heading-preset-badge" data-heading="💼 CAREER OPPORTUNITY 💼">💼 CAREER OPPORTUNITY 💼</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="setting-li-hashtags">Default Hashtags</label>
+          <input type="text" id="setting-li-hashtags" class="form-input" placeholder="#JobAlert #Hiring #CareerOpportunity #TechJobs #JobOpening" value="#JobAlert #Hiring #CareerOpportunity #TechJobs #JobOpening #Opportunity">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="setting-li-signature">Signature Line / Call to Action</label>
+          <input type="text" id="setting-li-signature" class="form-input" placeholder="Follow for daily verified job updates & career opportunities." value="Follow for daily verified job updates & career opportunities.">
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="setting-li-template">LinkedIn Post Template (Emojis & Line Spacing)</label>
+          <textarea id="setting-li-template" class="form-textarea" spellcheck="false" style="min-height: 180px;"></textarea>
+
+          <div class="template-tokens-help">
+            <span style="font-size: 0.76rem; font-weight: 700; width: 100%; margin-bottom: 2px;">Insert dynamic placeholders:</span>
+            <span class="token-badge li-token-badge" data-token="{heading}">+ {heading}</span>
+            <span class="token-badge li-token-badge" data-token="{job_title}">+ {job_title}</span>
+            <span class="token-badge li-token-badge" data-token="{company}">+ {company}</span>
+            <span class="token-badge li-token-badge" data-token="{location}">+ {location}</span>
+            <span class="token-badge li-token-badge" data-token="{workplace}">+ {workplace}</span>
+            <span class="token-badge li-token-badge" data-token="{experience}">+ {experience}</span>
+            <span class="token-badge li-token-badge" data-token="{salary}">+ {salary}</span>
+            <span class="token-badge li-token-badge" data-token="{category}">+ {category}</span>
+            <span class="token-badge li-token-badge" data-token="{job_link}">+ {job_link}</span>
+            <span class="token-badge li-token-badge" data-token="{hashtags}">+ {hashtags}</span>
+            <span class="token-badge li-token-badge" data-token="{signature}">+ {signature}</span>
+          </div>
+          <span style="font-size: 0.74rem; color: var(--text-light); margin-top: 8px; display: block;">
+            Note: Lines containing missing details (such as salary or experience if absent) are automatically omitted.
+          </span>
+        </div>
+
+        <!-- Real-time Live Preview -->
+        <div class="live-preview-box">
+          <div class="live-preview-header" style="color: #0A66C2;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" style="stroke: #0A66C2; color: #0A66C2;"><use href="#icon-linkedin"></use></svg>
+            <span>Live LinkedIn Caption Preview</span>
+          </div>
+          <div class="live-preview-text" id="settings-li-live-preview"></div>
+        </div>
+
+        <div class="settings-btn-row">
+          <button class="btn-primary" id="btn-save-li-settings" style="background-color: #0A66C2; border-color: #0A66C2;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-check"></use></svg>
+            <span>Save LinkedIn Settings</span>
+          </button>
+          <button class="btn-secondary" id="btn-reset-li-settings">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-refresh"></use></svg>
+            <span>Reset Defaults</span>
+          </button>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -1045,9 +1143,9 @@
       <span class="taskbar-label">Search</span>
     </button>
 
-    <button class="taskbar-item" data-view="activity" aria-label="History & Checked">
+    <button class="taskbar-item" data-view="activity" aria-label="Checklist & Applied Jobs">
       <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-check-square"></use></svg>
-      <span class="taskbar-label">History</span>
+      <span class="taskbar-label">Checklist</span>
       <span class="taskbar-badge" id="taskbar-activity-badge" style="display: none;">0</span>
     </button>
 
@@ -1117,12 +1215,54 @@
     </div>
   </div>
 
+  <!-- LinkedIn Caption Preview & Sharing Modal -->
+  <div class="modal-overlay" id="modal-linkedin-preview" role="dialog" aria-modal="true" aria-labelledby="li-modal-title">
+    <div class="modal-card modal-card-lg" style="max-width: 580px;">
+      <div class="modal-header" style="background-color: #0A66C2;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg class="svg-icon" viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: #FFFFFF;"><use href="#icon-linkedin"></use></svg>
+          <h3 id="li-modal-title" style="color: #FFFFFF; font-size: 1.05rem;">LinkedIn Post Caption Ready</h3>
+        </div>
+        <button class="btn-close-drawer" id="btn-close-li-modal" aria-label="Close modal" style="color: #FFFFFF;">
+          <svg class="svg-icon" viewBox="0 0 24 24"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-caption-status-bar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #EBF3FB; padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid #0A66C2;">
+          <div style="font-size: 0.82rem; color: #0A66C2; font-weight: 700;">
+            <span>✓ Pre-formed caption copied to clipboard!</span>
+          </div>
+          <span style="font-size: 0.76rem; color: var(--text-light);" id="li-modal-job-ref">Role &amp; Company</span>
+        </div>
+
+        <label class="form-label" for="li-modal-textarea" style="margin-bottom: 6px;">Post Caption (Preview &amp; Quick Edit):</label>
+        <textarea id="li-modal-textarea" class="form-textarea" spellcheck="false" style="min-height: 220px; font-family: inherit; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap;"></textarea>
+
+        <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+          <button class="btn-primary" id="btn-modal-copy-caption" style="flex: 1; min-width: 140px; background-color: #0A66C2; border-color: #0A66C2;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-copy"></use></svg>
+            <span id="txt-modal-copy-label">Copy Caption</span>
+          </button>
+          <button class="btn-secondary" id="btn-modal-open-feed" style="flex: 1; min-width: 150px; border-color: #0A66C2; color: #0A66C2;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-external-link"></use></svg>
+            <span>Open LinkedIn Feed</span>
+          </button>
+          <button class="btn-secondary" id="btn-modal-open-apply" style="flex: 1; min-width: 120px;">
+            <svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><use href="#icon-globe"></use></svg>
+            <span>Apply Link</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Application Scripts -->
   <script src="./js/sorter.js"></script>
   <script src="./js/whatsapp.js"></script>
+  <script src="./js/linkedin.js"></script>
   <script src="./js/sw-register.js"></script>
   <script src="./js/app.js"></script>
 

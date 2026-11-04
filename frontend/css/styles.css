@@ -909,11 +909,51 @@ body {
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+
+/* Official LinkedIn Action Button (Exact LinkedIn Brand Styling) */
+.btn-share-linkedin {
+  flex: 1;
+  min-width: 110px;
+  background-color: #0A66C2;
+  color: #FFFFFF;
+  border: 1.5px solid #0A66C2;
+  height: 42px;
+  border-radius: var(--radius-md);
+  font-size: 0.86rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(10, 102, 194, 0.22);
+  text-decoration: none;
+}
+
+.btn-share-linkedin:hover {
+  background-color: #004182;
+  border-color: #004182;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.32);
+}
+
+.btn-share-linkedin:active {
+  transform: scale(0.98);
+}
+
+.btn-share-linkedin .svg-icon {
+  width: 17px;
+  height: 17px;
+  fill: #FFFFFF;
+  color: #FFFFFF;
 }
 
 /* Primary WhatsApp Action Button */
 .btn-share-whatsapp {
   flex: 1;
+  min-width: 110px;
   background-color: var(--accent-blue);
   color: #FFFFFF;
   border: 1.5px solid var(--accent-blue);
@@ -2184,7 +2224,8 @@ body {
   flex-wrap: wrap;
 }
 
-.job-checkbox-btn {
+.job-checkbox-btn,
+.job-tickbox-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2200,32 +2241,48 @@ body {
   white-space: nowrap;
 }
 
-.job-checkbox-btn:hover {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-  background-color: var(--accent-blue-light);
+.job-checkbox-btn:hover,
+.job-tickbox-btn:hover {
+  border-color: #10B981;
+  color: #047857;
+  background-color: #ECFDF5;
 }
 
-.job-checkbox-btn.is-checked {
-  background-color: #F0FDF4;
-  border-color: #16A34A;
-  color: #16A34A;
+.job-checkbox-btn.is-checked,
+.job-tickbox-btn.is-ticked,
+.job-tickbox-btn.is-applied {
+  background-color: #ECFDF5;
+  border-color: #10B981;
+  color: #047857;
 }
 
-.job-checkbox-btn.is-checked .svg-icon {
-  color: #16A34A;
+.job-checkbox-btn.is-checked .svg-icon,
+.job-tickbox-btn.is-ticked .svg-icon,
+.job-tickbox-btn.is-applied .svg-icon {
+  color: #10B981;
+  stroke: #10B981;
 }
 
-.job-card.is-checked {
+.job-card.is-checked,
+.job-card.is-applied {
   border-color: #86EFAC;
   background-color: #FAFFFC;
 }
 
-.job-card.is-checked .job-card-title {
+.job-card.is-checked .job-card-title,
+.job-card.is-applied .job-card-title {
   color: #15803D;
 }
 
-.job-checked-ribbon {
+.job-ribbons-wrap {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.job-checked-ribbon,
+.job-applied-ribbon {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2236,13 +2293,90 @@ body {
   padding: 4px 10px;
   font-size: 0.74rem;
   font-weight: 800;
-  margin-bottom: 8px;
 }
 
-.job-checked-ribbon .svg-icon {
+.job-checked-ribbon .svg-icon,
+.job-applied-ribbon .svg-icon {
   color: #16A34A;
+  stroke: #16A34A;
   width: 14px;
   height: 14px;
+}
+
+.job-linkedin-ribbon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #EBF3FB;
+  color: #0A66C2;
+  border: 1px solid #BAE6FD;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.job-linkedin-ribbon .svg-icon {
+  fill: #0A66C2;
+  stroke: none;
+  width: 14px;
+  height: 14px;
+}
+
+/* Checklist Item in View 4 */
+.checklist-item {
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.checklist-item:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 4px 12px rgba(10, 42, 94, 0.08);
+}
+
+.checklist-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.checklist-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.checklist-checkbox-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #10B981;
+  transition: transform 0.15s ease;
+}
+
+.checklist-checkbox-btn:hover {
+  transform: scale(1.15);
+  color: #EF4444;
+}
+
+.checklist-tags-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .btn-uncheck-action {
